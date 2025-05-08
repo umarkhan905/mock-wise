@@ -72,8 +72,8 @@ const clerkWebhook = httpAction(async (ctx, request) => {
           stripeCustomerId: customer.id,
           username: username as string,
           image: image_url,
-          role: metadata.role,
-          companyName: metadata.companyName,
+          role: metadata.role || "candidate",
+          companyName: metadata.companyName || undefined,
         });
 
         if (!user) {
