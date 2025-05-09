@@ -1,3 +1,11 @@
+import {
+  Bot,
+  BriefcaseBusiness,
+  LayoutDashboard,
+  List,
+  MessageSquare,
+} from "lucide-react";
+
 export const featuresData = [
   {
     title: "AI Voice Interviews",
@@ -36,3 +44,33 @@ export const featuresData = [
     icon: "mock-interview-library-icon",
   },
 ];
+
+export const candidateSidebarNavigation = [
+  { title: "Dashboard", url: "/dashboard/candidate", icon: LayoutDashboard },
+  {
+    title: "Mock Interviews",
+    url: "/dashboard/mock-interviews",
+    icon: List,
+  },
+  {
+    title: "Job Interviews",
+    url: "/dashboard/candidate/job-interviews",
+    icon: BriefcaseBusiness,
+  },
+  {
+    title: "Interviews",
+    url: "/dashboard/candidate/messages",
+    icon: MessageSquare,
+  },
+  {
+    title: "Mock Wise AI",
+    url: "/dashboard/candidate/chatbot",
+    icon: Bot,
+  },
+];
+
+export const dummyUser = {
+  name: "John Doe",
+  email: "jPv6S@example.com",
+  avatar: "https://via.placeholder.com/150",
+};
