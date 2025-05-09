@@ -15,7 +15,10 @@ import {
 import Link from "next/link";
 import { NavUser } from "./NavUser";
 import { NavMain } from "./NavMain";
-import { candidateSidebarNavigation } from "@/constants";
+import {
+  candidateSidebarNavigation,
+  recruiterSidebarNavigation,
+} from "@/constants";
 
 type UserData = {
   name: string;
@@ -31,7 +34,10 @@ export function AppSidebar({
 }: { sidebarFor?: SidebarFor; userData: UserData } & React.ComponentProps<
   typeof Sidebar
 >) {
-  const navItems = sidebarFor === "candidate" ? candidateSidebarNavigation : [];
+  const navItems =
+    sidebarFor === "candidate"
+      ? candidateSidebarNavigation
+      : recruiterSidebarNavigation;
   return (
     <Sidebar {...props} collapsible="icon">
       <SidebarHeader>

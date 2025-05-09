@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   List,
   MessageSquare,
+  Plus,
 } from "lucide-react";
 
 export const featuresData = [
@@ -58,7 +59,31 @@ export const candidateSidebarNavigation = [
     icon: BriefcaseBusiness,
   },
   {
-    title: "Interviews",
+    title: "Messages",
+    url: "/dashboard/candidate/messages",
+    icon: MessageSquare,
+  },
+  {
+    title: "Mock Wise AI",
+    url: "/dashboard/candidate/chatbot",
+    icon: Bot,
+  },
+];
+
+export const recruiterSidebarNavigation = [
+  { title: "Dashboard", url: "/dashboard/recruiter", icon: LayoutDashboard },
+  {
+    title: "Create Interview",
+    url: "/dashboard/create-interview",
+    icon: Plus,
+  },
+  {
+    title: "All Interviews",
+    url: "/dashboard/candidate/all-interviews",
+    icon: List,
+  },
+  {
+    title: "Messages",
     url: "/dashboard/candidate/messages",
     icon: MessageSquare,
   },
