@@ -74,22 +74,22 @@ export const recruiterSidebarNavigation = [
   { title: "Dashboard", url: "/dashboard/recruiter", icon: LayoutDashboard },
   {
     title: "Create Interview",
-    url: "/dashboard/create-interview",
+    url: "/dashboard/recruiter/create-interview",
     icon: Plus,
   },
   {
     title: "All Interviews",
-    url: "/dashboard/candidate/all-interviews",
+    url: "/dashboard/recruiter/all-interviews",
     icon: List,
   },
   {
     title: "Messages",
-    url: "/dashboard/candidate/messages",
+    url: "/dashboard/recruiter/messages",
     icon: MessageSquare,
   },
   {
     title: "Mock Wise AI",
-    url: "/dashboard/candidate/chatbot",
+    url: "/dashboard/recruiter/chatbot",
     icon: Bot,
   },
 ];
