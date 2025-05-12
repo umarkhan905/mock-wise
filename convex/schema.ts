@@ -47,7 +47,10 @@ export default defineSchema({
     title: v.string(),
     message: v.string(),
     read: v.boolean(),
-  }).index("by_user_id", ["userId"]),
+  })
+    .index("by_user_id", ["userId"])
+    .index("by_read", ["read"])
+    .index("by_read_user_id", ["read", "userId"]),
 
   messages: defineTable({
     senderId: v.id("users"),
@@ -60,13 +63,14 @@ export default defineSchema({
     ),
   })
     .index("by_sender_id", ["senderId"])
-    .index("by_receiver_id", ["receiverId"]),
+    .index("by_receiver_id", ["receiverId"])
+    .index("by_sender_id_receiver_id", ["senderId", "receiverId"]),
 
   interviews: defineTable({
     createdById: v.id("users"),
     createdByRole: v.union(v.literal("candidate"), v.literal("recruiter")),
-    type: v.string(),
-    duration: v.number(),
+    type: v.array(v.string()),
+    duration: v.optional(v.number()),
     difficulty: v.union(
       v.literal("easy"),
       v.literal("medium"),
@@ -80,20 +84,19 @@ export default defineSchema({
     keywords: v.array(v.string()),
     topic: v.optional(v.string()),
     assessment: v.union(v.literal("voice"), v.literal("mcq")),
-    numberOfQuestions: v.number(),
+    numberOfQuestions: v.optional(v.number()),
     status: v.union(
+      v.literal("pending"),
       v.literal("scheduled"),
       v.literal("created"),
       v.literal("expired")
     ),
-    isScheduled: v.boolean(),
-    validateTill: v.number(), // unix timestamp
+    isScheduled: v.optional(v.boolean()),
+    validateTill: v.optional(v.number()), // unix timestamp
     category: v.union(v.literal("mock"), v.literal("job")),
     questions: v.array(
       v.object({
         question: v.string(),
-        questionType: v.string(),
-        codeEditor: v.boolean(),
         options: v.optional(v.array(v.string())),
         answer: v.optional(v.string()),
         explanation: v.optional(v.string()),
@@ -122,7 +125,7 @@ export default defineSchema({
     interviewId: v.id("interviews"),
     rating: v.number(),
     summary: v.string(),
-    stregnts: v.string(),
+    strengths: v.string(),
     weaknesses: v.string(),
     improvements: v.string(),
     assessment: v.string(),
