@@ -17,7 +17,13 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-export function NavMain({ items }: { items: NavItem[] }) {
+export function NavMain({
+  items,
+  sidebarFor,
+}: {
+  items: NavItem[];
+  sidebarFor: "candidate" | "recruiter";
+}) {
   const pathname = usePathname();
 
   return (
@@ -29,7 +35,11 @@ export function NavMain({ items }: { items: NavItem[] }) {
               asChild
               tooltip={item.title}
               className={`min-h-10`}
-              isActive={pathname === item.url}
+              isActive={
+                pathname === item.url ||
+                (pathname.startsWith(item.url) &&
+                  item.url !== `/dashboard/${sidebarFor}`)
+              }
             >
               <Link href={item.url} className="font-medium">
                 {item.icon && <item.icon />}

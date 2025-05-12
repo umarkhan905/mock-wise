@@ -69,7 +69,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
+        <NavMain items={navItems} sidebarFor={sidebarFor} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />
