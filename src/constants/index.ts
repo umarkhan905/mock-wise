@@ -1,10 +1,21 @@
 import {
   Bot,
   BriefcaseBusiness,
+  Calendar,
+  CalendarClock,
+  ClipboardList,
+  Code,
+  FileText,
+  Flame,
+  Landmark,
   LayoutDashboard,
+  Lightbulb,
   List,
+  Meh,
   MessageSquare,
   Plus,
+  Smile,
+  Users,
 } from "lucide-react";
 
 export const featuresData = [
@@ -79,7 +90,7 @@ export const recruiterSidebarNavigation = [
   },
   {
     title: "All Interviews",
-    url: "/dashboard/recruiter/all-interviews",
+    url: "/dashboard/recruiter/interviews",
     icon: List,
   },
   {
@@ -99,3 +110,93 @@ export const dummyUser = {
   email: "jPv6S@example.com",
   avatar: "https://via.placeholder.com/150",
 };
+
+export const interviewTypes = [
+  {
+    name: "Technical",
+    state: "technical",
+    icon: Code,
+  },
+  {
+    name: "Behavioral",
+    state: "behavioral",
+    icon: MessageSquare,
+  },
+  {
+    name: "HR",
+    state: "hr",
+    icon: Users,
+  },
+  {
+    name: "Aptitude",
+    state: "aptitude",
+    icon: Lightbulb,
+  },
+  {
+    name: "Coding",
+    state: "coding",
+    icon: ClipboardList,
+  },
+  {
+    name: "System Design",
+    state: "system_design",
+    icon: Landmark,
+  },
+  {
+    name: "Case Study",
+    state: "case_study",
+    icon: FileText,
+  },
+];
+
+export const difficultyLevels = [
+  {
+    name: "Easy",
+    state: "easy",
+    icon: Smile,
+  },
+  {
+    name: "Medium",
+    state: "medium",
+    icon: Meh,
+  },
+  {
+    name: "Hard",
+    state: "hard",
+    icon: Flame,
+  },
+];
+
+export const experienceIn = [
+  {
+    name: "Years",
+    state: "years",
+    icon: CalendarClock,
+  },
+  {
+    name: "Months",
+    state: "months",
+    icon: Calendar,
+  },
+];
+
+export const jobInterviewSteps = [
+  "add-details",
+  "add-question",
+  "preview",
+] as const;
+
+export const jobInterviewTabs = [
+  {
+    name: "Interview Details",
+    state: "add-details",
+  },
+  {
+    name: "Add Questions",
+    state: "add-question",
+  },
+  {
+    name: "Preview Interview",
+    state: "preview",
+  },
+];
