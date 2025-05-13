@@ -118,26 +118,39 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
   })
     .index("by_interview_id", ["interviewId"])
-    .index("by_user_id", ["userId"]),
+    .index("by_user_id", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_interview_and_user", ["interviewId", "userId"]),
 
   feedbacks: defineTable({
     userId: v.id("users"),
     interviewId: v.id("interviews"),
-    rating: v.number(),
+    participantId: v.id("participants"),
+    totalRating: v.number(),
     summary: v.string(),
     strengths: v.string(),
     weaknesses: v.string(),
     improvements: v.string(),
     assessment: v.string(),
     recommendedForJob: v.boolean(),
-    ratingItem: v.array(
+    recommendationReason: v.optional(v.string()),
+    rating: v.array(
       v.object({
-        name: v.string(),
+        name: v.union(
+          v.literal("Communication Skills"),
+          v.literal("Technical Knowledge"),
+          v.literal("Problem-Solving"),
+          v.literal("Cultural & Role Fit"),
+          v.literal("Confidence & Clarity"),
+          v.literal("Experience"),
+          v.literal("Presentation Skills")
+        ),
         score: v.number(),
         comment: v.string(),
       })
     ),
   })
     .index("by_user_id", ["userId"])
-    .index("by_interview_id", ["interviewId"]),
+    .index("by_interview_id", ["interviewId"])
+    .index("by_user_interview", ["interviewId", "userId"]),
 });

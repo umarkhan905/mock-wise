@@ -5,6 +5,33 @@ import { google } from "@ai-sdk/google";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 
+// schema
+const ratingItemSchema = z.object({
+  name: z.enum([
+    "Communication Skills",
+    "Technical Knowledge",
+    "Problem-Solving",
+    "Cultural & Role Fit",
+    "Confidence & Clarity",
+    "Experience",
+    "Presentation Skills",
+  ]),
+  score: z.number(),
+  comment: z.string(),
+});
+
+const interviewEvaluationSchema = z.object({
+  totalRating: z.number(),
+  rating: z.array(ratingItemSchema).length(7),
+  summary: z.string(),
+  strengths: z.string(),
+  weaknesses: z.string(),
+  improvements: z.string(),
+  assessment: z.string(),
+  recommendedForJob: z.boolean(),
+  recommendationReason: z.string(),
+});
+
 const generateDescription = action({
   args: {
     title: v.string(),
@@ -245,9 +272,72 @@ const generateKeywords = action({
   },
 });
 
+const generateFeedback = action({
+  args: {
+    transcript: v.array(
+      v.object({
+        role: v.string(),
+        content: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("Unauthorized: must be signed in.");
+    }
+
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+
+    if (!user) {
+      throw new ConvexError("User not found.");
+    }
+    // TODO: Apply rate limiting
+
+    const formatTranscript = args.transcript
+      .map((message) => `${message.role}: ${message.content}`)
+      .join("\n");
+
+    const { object: feedback } = await generateObject({
+      model: google("gemini-2.0-flash"),
+      schema: interviewEvaluationSchema,
+      prompt: `You are a professional interviewer analyzing a mock interview. Your task is to evaluate the candidate based on structured categories. Be objective, thorough, and critical in your analysis. Do not be lenient—highlight all mistakes, gaps, and areas for improvement clearly.
+
+      Transcript:
+      ${formatTranscript}
+
+      Score the candidate from 0 to 10 in the following areas. Do not add any categories other than the ones listed:
+
+      - **Communication Skills**: Clarity, articulation, structure of responses.
+      - **Technical Knowledge**: Understanding of role-relevant technical concepts.
+      - **Problem-Solving**: Analytical thinking and approach to solving problems.
+      - **Cultural & Role Fit**: Alignment with the company’s values and job expectations.
+      - **Confidence & Clarity**: Confidence, tone, and clarity during the conversation.
+      - **Experience**: Relevance and depth of prior experience.
+      - **Presentation Skills**: Effectiveness in presenting ideas or work clearly.
+
+      Also include:
+      - **Total Rating**: Overall impression of the candidate (average of all scores).
+      - A brief **summary** of the interview in 3–4 sentences.
+      - The candidate’s **strengths** and **weaknesses**.
+      - Suggested **improvements** to help the candidate grow.
+      - Final **assessment** on whether the candidate is a fit for the role.
+      - Based on the **totalRating**, set "recommendedForJob": true if the score is **greater than or equal to 7.0**, otherwise set it to false.
+      - If "recommendedForJob" is true, also include a "recommendationReason" explaining why the candidate is suitable for the role (1–2 sentences) else set "recommendationReason" to "N/A".
+`,
+    });
+
+    return feedback;
+  },
+});
+
 export {
   generateDescription,
   generateKeywords,
   generateMCQBasedQuestions,
   generateVoiceBasedQuestions,
+  generateFeedback,
 };
