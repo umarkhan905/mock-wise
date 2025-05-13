@@ -200,3 +200,18 @@ export const jobInterviewTabs = [
     state: "preview",
   },
 ];
+
+export const instructions = [
+  {
+    id: 1,
+    content: "Answer the question as truthfully as possible.",
+  },
+  {
+    id: 2,
+    content: "Answer the question as concisely as possible.",
+  },
+  {
+    id: 3,
+    content: "Answer the question as quickly as possible.",
+  },
+];

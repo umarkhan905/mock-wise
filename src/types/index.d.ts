@@ -47,3 +47,8 @@ interface InterviewType {
 }
 
 type Interview = InterviewType | undefined | null;
+
+type SavedMessage = {
+  role: "user" | "system" | "assistant";
+  content: string;
+};
