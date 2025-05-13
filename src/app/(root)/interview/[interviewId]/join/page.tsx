@@ -1,10 +1,10 @@
 import React from "react";
-import { Id } from "../../../../../convex/_generated/dataModel";
 import { currentUser } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { fetchQuery } from "convex/nextjs";
-import { api } from "../../../../../convex/_generated/api";
 import MockWiseAgent from "@/components/agent/MockWiseAgent";
+import { api } from "../../../../../../convex/_generated/api";
+import { Id } from "../../../../../../convex/_generated/dataModel";
 
 export default async function JoinInterview({
   params,
