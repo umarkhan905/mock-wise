@@ -1,14 +1,14 @@
 import React from "react";
-import { Id } from "../../../../convex/_generated/dataModel";
 import { auth } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { fetchMutation } from "convex/nextjs";
-import { api } from "../../../../convex/_generated/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Book, Clock, Info, List, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { instructions } from "@/constants";
+import { api } from "../../../../../convex/_generated/api";
+import { Id } from "../../../../../convex/_generated/dataModel";
 
 export default async function Interview({
   params,
