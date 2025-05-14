@@ -18,7 +18,7 @@ export default async function Feedback({
   }>;
 }) {
   const feedbackId = (await params).feedbackId;
-  const role = await checkRole("candidate");
+  const role = await checkRole("recruiter");
 
   const { feedback, interview } = await fetchQuery(
     api.feedbacks.getFeedbackById,
@@ -135,7 +135,7 @@ export default async function Feedback({
           className="min-h-10 md:min-h-11 rounded-full flex-1"
           asChild
         >
-          <Link href={role ? `/dashboard/candidate` : `/dashboard/recruiter`}>
+          <Link href={role ? `/dashboard/recruiter` : `/dashboard/candidate`}>
             Back to Dashboard
           </Link>
         </Button>
