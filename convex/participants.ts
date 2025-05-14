@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { type Interview } from "./types/index";
@@ -157,4 +157,95 @@ const updateParticipantStatus = mutation({
   },
 });
 
-export { createParticipant, initiateParticipant, updateParticipantStatus };
+const getInterviewParticipants = query({
+  args: {
+    interviewId: v.id("interviews"),
+  },
+  handler: async (ctx, args) => {
+    // Fetch all participants
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_interview_id", (q) =>
+        q.eq("interviewId", args.interviewId)
+      )
+      .collect();
+
+    // Fetch all users based on userIds
+    const userIds = participants.map((p) => p.userId);
+    const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
+
+    // Fetch feedbacks for this interview
+    const feedbacks = await ctx.db
+      .query("feedbacks")
+      .withIndex("by_interview_id", (q) =>
+        q.eq("interviewId", args.interviewId)
+      )
+      .collect();
+
+    // Map participants with corresponding user
+    const participantDetails = participants.map((participant) => {
+      const user = users.find((u) => u && u._id === participant.userId);
+      const feedback = feedbacks.find(
+        (f) => f.participantId === participant._id
+      );
+      return {
+        participant,
+        user,
+        feedback,
+      };
+    });
+
+    return participantDetails;
+  },
+});
+
+const getUserInterviewParticipation = query({
+  args: {
+    interviewId: v.id("interviews"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // Fetch all participants
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_interview_and_user", (q) =>
+        q.eq("interviewId", args.interviewId).eq("userId", args.userId)
+      )
+      .collect();
+
+    // Fetch all users based on userIds
+    const userIds = participants.map((p) => p.userId);
+    const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
+
+    // Fetch feedbacks for this interview
+    const feedbacks = await ctx.db
+      .query("feedbacks")
+      .withIndex("by_interview_id", (q) =>
+        q.eq("interviewId", args.interviewId)
+      )
+      .collect();
+
+    // Map participants with corresponding user
+    const participantDetails = participants.map((participant) => {
+      const user = users.find((u) => u && u._id === participant.userId);
+      const feedback = feedbacks.find(
+        (f) => f.participantId === participant._id
+      );
+      return {
+        participant,
+        user,
+        feedback,
+      };
+    });
+
+    return participantDetails;
+  },
+});
+
+export {
+  createParticipant,
+  initiateParticipant,
+  updateParticipantStatus,
+  getInterviewParticipants,
+  getUserInterviewParticipation,
+};
