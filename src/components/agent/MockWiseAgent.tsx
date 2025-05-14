@@ -95,6 +95,10 @@ export default function MockWiseAgent({
   const handleGenerateFeedback = async (messages: SavedMessage[]) => {
     setCallStatus(CallStatus.GENERATING_FEEDBACK);
     const feedback = await generateFeedback({ transcript: messages });
+    if (feedback) {
+      setCallStatus(CallStatus.REDIRECTING);
+    }
+
     const feedbackId = await createFeedback({
       ...feedback,
       userId: user.userId!,
@@ -108,13 +112,14 @@ export default function MockWiseAgent({
       return;
     }
 
-    await updateParticipantStatus({
-      participantId: participantId!,
-      status: "completed",
-      completedAt: Date.now(),
-    });
-    setCallStatus(CallStatus.REDIRECTING);
-    router.push(`/interview/${interviewId}/feedback/${feedbackId}`);
+    if (feedbackId) {
+      await updateParticipantStatus({
+        participantId: participantId!,
+        status: "completed",
+        completedAt: Date.now(),
+      });
+      router.push(`/interview/${interviewId}/feedback/${feedbackId}`);
+    }
   };
 
   useEffect(() => {
@@ -172,11 +177,7 @@ export default function MockWiseAgent({
   }, [callStatus, messages, type, router]);
 
   useEffect(() => {
-    if (
-      callStatus === CallStatus.FINISHED &&
-      type === "interview" &&
-      !isFeedbackGenerated
-    ) {
+    if (callStatus === CallStatus.FINISHED && type === "interview") {
       // avoid for calling twice to generate feedback
       setIsFeedbackGenerated(true);
 
