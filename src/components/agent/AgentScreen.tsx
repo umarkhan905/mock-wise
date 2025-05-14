@@ -1,10 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Id } from "../../../convex/_generated/dataModel";
-import { Captions, Phone } from "lucide-react";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Avatar, AvatarImage } from "../ui/avatar";
+import { AvatarFallback } from "@radix-ui/react-avatar";
+import { ChatBubble } from "./chat/ChatBubble";
+
+enum CallStatus {
+  INACTIVE = "INACTIVE",
+  CONNECTING = "CONNECTING",
+  ACTIVE = "ACTIVE",
+  FINISHED = "FINISHED",
+  GENERATING_FEEDBACK = "GENERATING_FEEDBACK",
+  REDIRECTING = "REDIRECTING",
+  ERROR = "ERROR",
+}
 
 interface User {
   userId: Id<"users">;
@@ -14,31 +27,59 @@ interface User {
 
 interface Props {
   messages: SavedMessage[];
-  lastMessage: string;
   isSpeaking: boolean;
   user: User;
   type: "generate" | "interview";
-  handleDisconnect: () => void;
+  title: string;
+  callStatus: CallStatus;
+  handleDisconnect?: () => void;
 }
 
 export default function AgentScreen({
   isSpeaking,
   messages,
-  lastMessage,
   user,
   type = "generate",
+  title,
+  callStatus,
   handleDisconnect,
 }: Props) {
-  const callEnded = false;
-  const callActive = false;
-  const connecting = true;
+  const chatContainerRef = React.useRef<HTMLDivElement>(null);
+
+  // auto-scroll messages
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   return (
-    <section className="flex flex-col min-h-screen text-foreground overflow-hidden py-6">
+    <section className="flex flex-col min-h-screen text-foreground overflow-hidden pb-6 pt-10">
       <div className="container mx-auto px-4 h-full max-w-5xl">
+        {type === "interview" && (
+          <div className="flex items-center justify-between mb-8 bg-card/90 p-2 border rounded-md">
+            <div className="flex items-center gap-2">
+              <Avatar className="size-10">
+                <AvatarImage src={"/logo.png"} />
+                <AvatarFallback className="rounded-full">CN</AvatarFallback>
+              </Avatar>
+              <h1 className="text-2xl font-bold">{title}</h1>
+            </div>
+            {/* TODO: Add Timer */}
+            <Badge
+              variant={"outline"}
+              className="min-w-[100px] py-1 rounded-full text-lg"
+            >
+              00:00
+            </Badge>
+          </div>
+        )}
+
         {/* Title */}
         {type === "generate" && (
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold font-mono">
+            <h1 className="text-3xl font-bold">
               <span>Generate Your </span>
               <span className="text-primary uppercase">Mock Interview</span>
             </h1>
@@ -154,59 +195,35 @@ export default function AgentScreen({
 
         {/* CHAT MESSAGES  */}
         {messages.length > 0 && (
-          <div className="w-full bg-card/90 backdrop-blur-sm border border-border rounded-xl p-4 mb-8 h-16 flex items-center justify-center">
-            <p className="text-foreground">{lastMessage}</p>
+          <div
+            className="w-full bg-card/90 backdrop-blur-sm border border-border rounded-xl p-4 mb-8 h-64 transition-all duration-300 scroll-smooth overflow-y-auto scrollbar-hide"
+            ref={chatContainerRef}
+          >
+            <div className="space-y-3">
+              {messages.map((msg, index) => (
+                <ChatBubble
+                  key={index}
+                  message={msg.content}
+                  isSender={msg.role === "user"}
+                  avatarUrl={msg.role === "user" ? user?.avatar : "/logo.png"}
+                  senderInitials={
+                    msg.role === "user" ? user?.username.charAt(0) : "AI"
+                  }
+                />
+              ))}
+            </div>
           </div>
         )}
 
-        {/* CALL CONTROLS */}
-        {type === "generate" && (
-          <div className="w-full flex justify-center gap-4">
-            <Button
-              className={`w-40 text-xl rounded-3xl ${
-                callActive
-                  ? "bg-destructive hover:bg-destructive/90"
-                  : callEnded
-                    ? "bg-green-600 hover:bg-green-700"
-                    : "bg-primary hover:bg-primary/90"
-              } text-white relative`}
-            >
-              {connecting && (
-                <span className="absolute inset-0 rounded-full animate-ping bg-primary/50 opacity-75"></span>
-              )}
-
-              <span>
-                {callActive
-                  ? "End Call"
-                  : connecting
-                    ? "Connecting..."
-                    : callEnded
-                      ? "View Profile"
-                      : "Start Call"}
-              </span>
-            </Button>
-          </div>
-        )}
-
-        {type === "interview" && (
+        {/* DISCONNECT BUTTON */}
+        {type === "interview" && callStatus === CallStatus.ACTIVE && (
           <div className="flex items-center justify-center gap-4">
             <Button
-              size={"icon"}
+              className="w-40 min-h-10"
               variant={"destructive"}
-              className="rounded-full"
-              title="End Call"
               onClick={handleDisconnect}
             >
-              <Phone className="size-5" />
-            </Button>
-
-            <Button
-              size={"icon"}
-              variant={"outline"}
-              className="rounded-full"
-              title="Captions"
-            >
-              <Captions className="size-5" />
+              End Interview
             </Button>
           </div>
         )}

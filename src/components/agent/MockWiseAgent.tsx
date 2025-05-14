@@ -7,7 +7,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { INTERVIEWER } from "@/constants/vapi";
-import { LoadingScreen } from "@/app/interview/_components/LoadingScreen";
+import { LoadingScreen } from "./loading/LoadingScreen";
 import AgentScreen from "./AgentScreen";
 
 enum CallStatus {
@@ -31,6 +31,7 @@ interface Props {
   interviewId?: Id<"interviews">;
   participantId?: Id<"participants">;
   questions?: Question[];
+  title?: string;
   position: string;
   type: "generate" | "interview";
 }
@@ -42,11 +43,11 @@ export default function MockWiseAgent({
   questions,
   position,
   type,
+  title,
 }: Props) {
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [messages, setMessages] = useState<SavedMessage[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [lastMessage, setLastMessage] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isFeedbackGenerated, setIsFeedbackGenerated] =
     useState<boolean>(false);
@@ -165,10 +166,6 @@ export default function MockWiseAgent({
   }, []);
 
   useEffect(() => {
-    if (messages.length > 0) {
-      setLastMessage(messages[messages.length - 1].content);
-    }
-
     if (callStatus === CallStatus.FINISHED && type === "generate") {
       router.push("/dashboard/candidate/interviews");
     }
@@ -213,11 +210,12 @@ export default function MockWiseAgent({
   return callStatus === CallStatus.ACTIVE ? (
     <AgentScreen
       messages={messages}
-      lastMessage={lastMessage}
       isSpeaking={isSpeaking}
       handleDisconnect={handleDisconnect}
       user={user}
       type={type}
+      title={title || ""}
+      callStatus={callStatus}
     />
   ) : null;
 }
