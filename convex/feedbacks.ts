@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 
 const createFeedback = mutation({
   args: {
@@ -35,4 +36,17 @@ const createFeedback = mutation({
   },
 });
 
-export { createFeedback };
+const getFeedbackById = query({
+  args: {
+    id: v.id("feedbacks"),
+  },
+  handler: async (ctx, args) => {
+    const feedback = await ctx.db.get(args.id);
+    const interview = await ctx.db.get(
+      feedback?.interviewId as Id<"interviews">
+    );
+    return { feedback, interview };
+  },
+});
+
+export { createFeedback, getFeedbackById };
