@@ -10,6 +10,7 @@ const isCandidateRoute = createRouteMatcher([
   "/dashboard/candidate(.*)",
   "/interview/:interviewId",
   "/interview/:interviewId/join",
+  "/interview/:interviewId/join-mcq",
   "/interview/:interviewId/attempted",
   "/interview/:interviewId/expired",
   "/interview/:interviewId/candidate/details",
