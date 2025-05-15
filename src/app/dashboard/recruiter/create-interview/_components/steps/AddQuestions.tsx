@@ -117,6 +117,7 @@ export default function AddQuestions({ assessment }: Props) {
           question: q.question,
           options: q.options,
           answer: q.answer,
+          explanation: q.explanation,
         })),
         interviewId: interviewId!,
         duration,
