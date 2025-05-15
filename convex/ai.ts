@@ -32,6 +32,24 @@ const interviewEvaluationSchema = z.object({
   recommendationReason: z.string(),
 });
 
+const mcqRatingItemSchema = z.object({
+  name: z.enum(["Technical Knowledge", "Problem-Solving", "Time Management"]),
+  score: z.number(),
+  comment: z.string(),
+});
+
+const mcqInterviewEvaluationSchema = z.object({
+  totalRating: z.number(),
+  rating: z.array(mcqRatingItemSchema).length(3),
+  summary: z.string(),
+  strengths: z.string(),
+  weaknesses: z.string(),
+  improvements: z.string(),
+  assessment: z.string(),
+  recommendedForJob: z.boolean(),
+  recommendationReason: z.string(),
+});
+
 const generateDescription = action({
   args: {
     title: v.string(),
@@ -334,10 +352,79 @@ const generateFeedback = action({
   },
 });
 
+const generateMCQFeedback = action({
+  args: {
+    totalQuestions: v.number(),
+    correctAnswers: v.number(),
+    wrongAnswers: v.number(),
+    accuracy: v.number(),
+    timeTaken: v.number(),
+    questions: v.array(
+      v.object({
+        question: v.string(),
+        options: v.array(v.string()),
+        answer: v.string(),
+        userAnswer: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("Unauthorized: must be signed in.");
+    }
+
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+
+    if (!user) {
+      throw new ConvexError("User not found.");
+    }
+    // TODO: Apply rate limiting
+
+    const { object: feedback } = await generateObject({
+      model: google("gemini-2.0-flash"),
+      schema: mcqInterviewEvaluationSchema,
+      prompt: `You are an expert interview evaluator reviewing a multiple-choice based technical interview. Based on the provided user answers, correct answers, and any available timing data, generate a detailed feedback report.
+
+      Input:
+        - **Total Questions**: ${args.totalQuestions}
+        - **Correct Answers**: ${args.correctAnswers}
+        - **Wrong Answers**: ${args.wrongAnswers}
+        - **Accuracy**: ${args.accuracy}
+        - **Time Taken**: ${args.timeTaken} (in seconds)
+        - **Questions**: ${JSON.stringify(args.questions)}
+
+      Score the candidate from 0 to 10 in the following areas. Do not add any categories other than the ones listed:
+
+        - **Technical Knowledge**: Accuracy and difficulty of answered questions.
+        - **Problem-Solving**: Ability to choose the best solution among options.
+        - **Time Management**: How efficiently time was used.
+       
+      Also include:
+      - **Total Rating**: Overall impression of the candidate (average of all scores).
+      - A brief **summary** of the interview in 3–4 sentences.
+      - The candidate’s **strengths** and **weaknesses**.
+      - Suggested **improvements** to help the candidate grow.
+      - Final **assessment** on whether the candidate is a fit for the role.
+      - Based on the **totalRating**, set "recommendedForJob": true if the score is **greater than or equal to 7.0**, otherwise set it to false.
+      - If "recommendedForJob" is true, also include a "recommendationReason" explaining why the candidate is suitable for the role (1–2 sentences) else set "recommendationReason" to "N/A".  
+      `,
+      system:
+        "You are an expert interview evaluator reviewing a multiple-choice based technical interview.",
+    });
+
+    return feedback;
+  },
+});
+
 export {
   generateDescription,
   generateKeywords,
   generateMCQBasedQuestions,
   generateVoiceBasedQuestions,
   generateFeedback,
+  generateMCQFeedback,
 };
