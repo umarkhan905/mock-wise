@@ -136,15 +136,7 @@ export default defineSchema({
     recommendationReason: v.optional(v.string()),
     rating: v.array(
       v.object({
-        name: v.union(
-          v.literal("Communication Skills"),
-          v.literal("Technical Knowledge"),
-          v.literal("Problem-Solving"),
-          v.literal("Cultural & Role Fit"),
-          v.literal("Confidence & Clarity"),
-          v.literal("Experience"),
-          v.literal("Presentation Skills")
-        ),
+        name: v.string(),
         score: v.number(),
         comment: v.string(),
       })
