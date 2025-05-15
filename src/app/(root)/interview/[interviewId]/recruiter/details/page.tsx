@@ -181,9 +181,7 @@ export default function Details() {
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4">
-              <Button className="w-full rounded-full min-h-11">
-                Copy Link
-              </Button>
+              <Button className="w-full text-white min-h-10">Copy Link</Button>
             </CardContent>
           </Card>
         )}

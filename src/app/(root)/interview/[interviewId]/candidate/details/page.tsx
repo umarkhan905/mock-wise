@@ -189,15 +189,16 @@ export default function Details() {
         ) : (
           <Card className="py-4 gap-3">
             <CardHeader className="px-4">
-              <CardTitle className="">No candidates yet</CardTitle>
+              <CardTitle className="">No attempts yet</CardTitle>
               <CardDescription>
-                Share your interview link with candidates to make your first
-                candidate.
+                Start your interview to make your first attempt.
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4">
-              <Button className="w-full rounded-full min-h-11">
-                Copy Link
+              <Button className="w-full text-white min-h-10" asChild>
+                <Link href={`/interview/${interview._id}`}>
+                  Start Interview
+                </Link>
               </Button>
             </CardContent>
           </Card>
