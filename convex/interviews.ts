@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { api } from "./_generated/api";
+import { internalMutation, mutation, query } from "./_generated/server";
+import { api, internal } from "./_generated/api";
 
 const createJobInterview = mutation({
   args: {
@@ -151,9 +151,99 @@ const getInterviewById = query({
   },
 });
 
+const scheduleInterview = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    scheduledAt: v.number(),
+    isScheduled: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("Unauthorized: must be signed in");
+    }
+
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    // un-schedule an interview when it reaches the scheduled time
+    const jobId = await ctx.scheduler.runAt(
+      args.scheduledAt,
+      internal.interviews.autoUnscheduleInterview,
+      {
+        interviewId: args.interviewId,
+      }
+    );
+
+    await ctx.db.patch(args.interviewId, {
+      status: "scheduled",
+      scheduledAt: args.scheduledAt,
+      isScheduled: args.isScheduled,
+      jobId,
+    });
+  },
+});
+
+const autoUnscheduleInterview = internalMutation({
+  args: {
+    interviewId: v.id("interviews"),
+  },
+  handler: async (ctx, args) => {
+    const interviewId = await ctx.db.patch(args.interviewId, {
+      status: "created",
+      scheduledAt: undefined,
+      isScheduled: false,
+    });
+
+    return interviewId;
+  },
+});
+
+const unScheduleInterview = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    jobId: v.id("_scheduled_functions"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("Unauthorized: must be signed in");
+    }
+
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    const interviewId = await ctx.db.patch(args.interviewId, {
+      status: "pending",
+      scheduledAt: undefined,
+      isScheduled: false,
+      jobId: undefined,
+    });
+
+    await ctx.scheduler.cancel(args.jobId);
+
+    return interviewId;
+  },
+});
+
 export {
   createJobInterview,
   getInterviewById,
   updateJobInterview,
   updateQuestions,
+  autoUnscheduleInterview,
+  scheduleInterview,
+  unScheduleInterview,
 };

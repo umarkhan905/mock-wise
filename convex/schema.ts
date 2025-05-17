@@ -92,6 +92,8 @@ export default defineSchema({
       v.literal("expired")
     ),
     isScheduled: v.optional(v.boolean()),
+    scheduledAt: v.optional(v.number()),
+    jobId: v.optional(v.id("_scheduled_functions")), // job id for scheduled interviews
     validateTill: v.optional(v.number()), // unix timestamp
     category: v.union(v.literal("mock"), v.literal("job")),
     questions: v.array(
