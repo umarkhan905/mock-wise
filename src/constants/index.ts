@@ -183,6 +183,7 @@ export const experienceIn = [
 export const jobInterviewSteps = [
   "add-details",
   "add-question",
+  "schedule-interview",
   "preview",
 ] as const;
 
@@ -194,6 +195,10 @@ export const jobInterviewTabs = [
   {
     name: "Add Questions",
     state: "add-question",
+  },
+  {
+    name: "Schedule Interview",
+    state: "schedule-interview",
   },
   {
     name: "Preview Interview",
