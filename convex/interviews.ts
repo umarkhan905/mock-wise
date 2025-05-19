@@ -238,6 +238,122 @@ const unScheduleInterview = mutation({
   },
 });
 
+const createTopicInterview = mutation({
+  args: {
+    createdById: v.id("users"),
+    title: v.string(),
+    type: v.array(v.string()),
+    difficulty: v.union(
+      v.literal("easy"),
+      v.literal("medium"),
+      v.literal("hard")
+    ),
+    topic: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("Unauthorized: must be signed in");
+    }
+
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    const interviewId = await ctx.db.insert("interviews", {
+      createdById: args.createdById,
+      createdByRole: "candidate",
+      type: args.type,
+      difficulty: args.difficulty,
+      experience: 0,
+      experienceIn: "months",
+      title: args.title,
+      role: "",
+      topic: args.topic,
+      assessment: "voice",
+      status: "pending",
+      category: "mock",
+      questions: [],
+      keywords: [],
+    });
+
+    return interviewId;
+  },
+});
+
+const updateTopicInterview = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    title: v.string(),
+    type: v.array(v.string()),
+    difficulty: v.union(
+      v.literal("easy"),
+      v.literal("medium"),
+      v.literal("hard")
+    ),
+    topic: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("Unauthorized: must be signed in");
+    }
+
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    const interviewId = await ctx.db.patch(args.interviewId, {
+      type: args.type,
+      difficulty: args.difficulty,
+      title: args.title,
+      topic: args.topic,
+    });
+
+    return interviewId;
+  },
+});
+
+const updateFinish = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    description: v.string(),
+    keywords: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("Unauthorized: must be signed in");
+    }
+
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    const interviewId = await ctx.db.patch(args.interviewId, {
+      description: args.description,
+      keywords: args.keywords,
+    });
+
+    return interviewId;
+  },
+});
+
 export {
   createJobInterview,
   getInterviewById,
@@ -246,4 +362,7 @@ export {
   autoUnscheduleInterview,
   scheduleInterview,
   unScheduleInterview,
+  createTopicInterview,
+  updateTopicInterview,
+  updateFinish,
 };
