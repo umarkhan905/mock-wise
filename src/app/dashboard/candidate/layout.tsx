@@ -64,7 +64,7 @@ export default function Layout({
             </Button>
           </div>
         </header>
-        <main>{children}</main>
+        <main className="p-5">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
