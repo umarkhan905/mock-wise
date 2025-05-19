@@ -117,6 +117,8 @@ export function AddJobInterviewDetails() {
         role: formData.role,
         keywords: generatedKeywords,
         description: formData.description,
+        category: "mock",
+        createdByRole: "candidate",
       });
 
       setLocalStorage("interviewId", interviewId);

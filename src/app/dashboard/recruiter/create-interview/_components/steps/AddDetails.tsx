@@ -72,6 +72,8 @@ export function AddDetails({ assessment }: Props) {
         experienceIn: formData.experienceIn as ExperienceIn,
         createdById: user._id,
         assessment,
+        category: "job",
+        createdByRole: "recruiter",
       });
       setLocalStorage("interviewId", interviewId);
       nextStep();

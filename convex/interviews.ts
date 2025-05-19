@@ -18,6 +18,12 @@ const createJobInterview = mutation({
     experienceIn: v.union(v.literal("years"), v.literal("months")),
     keywords: v.array(v.string()),
     assessment: v.union(v.literal("voice"), v.literal("mcq")),
+    category: v.union(v.literal("mock"), v.literal("job")),
+    createdByRole: v.union(
+      v.literal("candidate"),
+      v.literal("recruiter"),
+      v.literal("admin")
+    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
