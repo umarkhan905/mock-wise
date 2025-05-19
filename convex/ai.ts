@@ -207,6 +207,7 @@ const generateVoiceBasedQuestions = action({
       [
         {
           question: open-ended or situational question suitable for spoken response,
+          timeLimit: number in seconds (time limit for the question),
         }
       ]
      
@@ -218,6 +219,7 @@ const generateVoiceBasedQuestions = action({
     - Format each question appropriately based on the assessment type.
     - Don't add any additional text with questions or options except the given format.
     - The questions are going to be read by a voice assistant so do not use "/" or "*" or any other special characters which might break the voice assistant.
+    - Time limit in which the candidate should answer the question.
     
     Ensure all questions are unique, relevant, and challenge the candidate at a "${args.difficulty}" level.
     Avoid duplication and keep language clear and professional.
@@ -420,6 +422,130 @@ const generateMCQFeedback = action({
   },
 });
 
+const generateTopicBasedQuestions = action({
+  args: {
+    numberOfQuestions: v.number(),
+    title: v.string(),
+    topic: v.string(),
+    type: v.array(v.string()),
+    difficulty: v.union(
+      v.literal("easy"),
+      v.literal("medium"),
+      v.literal("hard")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("Unauthorized: must be signed in.");
+    }
+
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+
+    if (!user) {
+      throw new ConvexError("User not found.");
+    }
+    // TODO: Apply rate limiting
+
+    const { text: questions } = await generateText({
+      model: google("gemini-2.0-flash"),
+      prompt: `
+      Generate ${args.numberOfQuestions} interview questions for the topic of a "${args.topic}".
+
+    Details for context:
+    - **Title**: ${args.title}
+    - **Topic**: ${args.topic}
+    - **Difficulty**: ${args.difficulty}
+    - **Question Types**: ${args.type.join(",")} (comma-separated)  
+
+    Format:
+    - Give questions in json format as follows:
+      [
+        {
+          question: open-ended or situational question suitable for spoken response,
+          timeLimit: number in seconds (time limit for the question),
+        }
+      ]
+     
+
+    Instructions:
+    - The questions must match the topic, difficulty level, and question types.
+    - Base the content around the topic.
+    - Use only the specified question types (e.g., coding, technical, behavioral).
+    - Don't add any additional text with questions or options except the given format.
+    - The questions are going to be read by a voice assistant so do not use "/" or "*" or any other special characters which might break the voice assistant.
+    - Time limit in which the candidate should answer the question.
+    
+    Ensure all questions are unique, relevant, and challenge the candidate at a "${args.difficulty}" level.
+    Avoid duplication and keep language clear and professional.
+    `,
+      system:
+        "You are an expert technical interviewer. Your task is to generate interview questions based on the provided job details.",
+    });
+
+    return questions;
+  },
+});
+
+const generateFinish = action({
+  args: {
+    title: v.string(),
+    topic: v.string(),
+    type: v.array(v.string()),
+    difficulty: v.union(
+      v.literal("easy"),
+      v.literal("medium"),
+      v.literal("hard")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new ConvexError("Unauthorized: must be signed in.");
+    }
+
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+
+    if (!user) {
+      throw new ConvexError("User not found.");
+    }
+
+    // TODO: Apply rate limiting
+    const { object } = await generateObject({
+      model: google("gemini-2.0-flash"),
+      schema: z.object({
+        description: z.string(),
+        keywords: z.array(z.string()),
+      }),
+      prompt: `Generate a professional and concise job description for the position titled "${args.title}" under the topic "${args.topic}". Also include a list of relevant keywords or technologies required for the interview.
+
+    Details for context:
+    - **Title**: ${args.title}
+    - **Topic**: ${args.topic}
+    - **Difficulty**: ${args.difficulty}
+    - **Interview Types**: ${args.type.join(",")} (comma-separated)
+
+    Instructions:
+    - The description should be clear and concise.
+    - The keywords should be relevant to the topic and difficulty level.
+    - The keywords should be in a list format.
+    - Do not include any explanation, greetings, or extra text.  
+      `,
+
+      system:
+        "You are an AI job description and keywords or technologies generator. Your task is to generate the description and keywords based on title, topic,difficulty, and interview types provided by the user.",
+    });
+
+    return object;
+  },
+});
+
 export {
   generateDescription,
   generateKeywords,
@@ -427,4 +553,6 @@ export {
   generateVoiceBasedQuestions,
   generateFeedback,
   generateMCQFeedback,
+  generateTopicBasedQuestions,
+  generateFinish,
 };
