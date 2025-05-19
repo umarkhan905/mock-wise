@@ -52,19 +52,37 @@ export default defineSchema({
     .index("by_read", ["read"])
     .index("by_read_user_id", ["read", "userId"]),
 
-  messages: defineTable({
+  chatRequests: defineTable({
     senderId: v.id("users"),
     receiverId: v.id("users"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("rejected")
+    ),
+  })
+    .index("by_sender_id", ["senderId"])
+    .index("by_receiver_id", ["receiverId"])
+    .index("by_sender_id_receiver_id", ["senderId", "receiverId"])
+    .index("by_status", ["status"]),
+
+  chats: defineTable({
+    senderId: v.id("users"),
+    receiverId: v.id("users"),
+  }).index("by_sender_id_receiver_id", ["senderId", "receiverId"]),
+
+  messages: defineTable({
+    chatId: v.id("chats"),
     message: v.string(),
+    sendAt: v.number(),
     status: v.union(
       v.literal("sent"),
       v.literal("received"),
       v.literal("read")
     ),
   })
-    .index("by_sender_id", ["senderId"])
-    .index("by_receiver_id", ["receiverId"])
-    .index("by_sender_id_receiver_id", ["senderId", "receiverId"]),
+    .index("by_chat_id", ["chatId"])
+    .index("by_status", ["status"]),
 
   interviews: defineTable({
     createdById: v.id("users"),
