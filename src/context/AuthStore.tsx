@@ -15,8 +15,8 @@ type User = {
 };
 
 interface AuthContextProps {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: User | undefined;
+  setUser: (user: User | undefined) => void;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -26,7 +26,7 @@ export const AuthContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | undefined>(undefined);
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const dbUser = useQuery(
     api.users.getUserByClerkId,
