@@ -60,10 +60,16 @@ export const featuresData = [
 export const candidateSidebarNavigation = [
   { title: "Dashboard", url: "/dashboard/candidate", icon: LayoutDashboard },
   {
+    title: "Create Interview",
+    url: "/dashboard/candidate/create-interview",
+    icon: Plus,
+  },
+  {
     title: "Mock Interviews",
     url: "/dashboard/mock-interviews",
     icon: List,
   },
+
   {
     title: "Job Interviews",
     url: "/dashboard/candidate/job-interviews",
@@ -187,6 +193,12 @@ export const jobInterviewSteps = [
   "preview",
 ] as const;
 
+export const mockInterviewSteps = [
+  "add-details",
+  "add-question",
+  "preview",
+] as const;
+
 export const jobInterviewTabs = [
   {
     name: "Interview Details",
@@ -199,6 +211,21 @@ export const jobInterviewTabs = [
   {
     name: "Schedule Interview",
     state: "schedule-interview",
+  },
+  {
+    name: "Preview Interview",
+    state: "preview",
+  },
+];
+
+export const mockInterviewTabs = [
+  {
+    name: "Interview Details",
+    state: "add-details",
+  },
+  {
+    name: "Add Questions",
+    state: "add-question",
   },
   {
     name: "Preview Interview",
