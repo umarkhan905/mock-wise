@@ -12,6 +12,7 @@ import {
   Lightbulb,
   List,
   Meh,
+  MessageCircle,
   MessageSquare,
   Plus,
   Smile,
@@ -76,9 +77,9 @@ export const candidateSidebarNavigation = [
     icon: BriefcaseBusiness,
   },
   {
-    title: "Messages",
-    url: "/dashboard/candidate/messages",
-    icon: MessageSquare,
+    title: "Chat",
+    url: "/dashboard/candidate/chats",
+    icon: MessageCircle,
   },
   {
     title: "Mock Wise AI",
@@ -100,9 +101,9 @@ export const recruiterSidebarNavigation = [
     icon: List,
   },
   {
-    title: "Messages",
-    url: "/dashboard/recruiter/messages",
-    icon: MessageSquare,
+    title: "Chat",
+    url: "/dashboard/recruiter/chats",
+    icon: MessageCircle,
   },
   {
     title: "Mock Wise AI",

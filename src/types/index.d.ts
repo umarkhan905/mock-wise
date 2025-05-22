@@ -1,3 +1,5 @@
+import { Id } from "../../convex/_generated/dataModel";
+
 type ExperienceIn = "years" | "months";
 type Difficulty = "easy" | "medium" | "hard";
 type Assessment = "voice" | "mcq";
@@ -52,3 +54,11 @@ type SavedMessage = {
   role: "user" | "system" | "assistant";
   content: string;
 };
+
+interface Message {
+  message: string;
+  status: "read" | "sent" | "received";
+  chatId: Id<"chats">;
+  sendAt: number;
+  senderId: Id<"users">;
+}
