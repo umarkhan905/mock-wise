@@ -149,7 +149,8 @@ export default defineSchema({
     .index("by_interview_id", ["interviewId"])
     .index("by_user_id", ["userId"])
     .index("by_status", ["status"])
-    .index("by_interview_and_user", ["interviewId", "userId"]),
+    .index("by_interview_and_user", ["interviewId", "userId"])
+    .index("by_interview_id_and_completed_at", ["interviewId", "completedAt"]),
 
   feedbacks: defineTable({
     userId: v.id("users"),
