@@ -81,4 +81,137 @@ const getUserByStripeCustomerId = query({
   },
 });
 
-export { createUser, deleteUser, getUserByClerkId, getUserByStripeCustomerId };
+const getAllUsers = query({
+  args: {
+    currentUserId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // TODO: add pagination for large datasets
+    const users = await ctx.db
+      .query("users")
+      .filter((q) => q.neq(q.field("_id"), args.currentUserId))
+      .collect();
+
+    return users;
+  },
+});
+
+const getSuggestedUsers = query({
+  args: {
+    currentUserId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // TODO: add pagination for large datasets
+    // get user chats and filter out users who are already in the chat
+
+    const chats = await ctx.db
+      .query("chats")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("senderId"), args.currentUserId),
+          q.eq(q.field("receiverId"), args.currentUserId)
+        )
+      )
+      .collect();
+
+    const excludedUserIds = new Set(
+      chats.map((chat) => {
+        return chat.senderId === args.currentUserId
+          ? chat.receiverId
+          : chat.senderId;
+      })
+    );
+
+    // Add currentUserId to the exclusion list
+    excludedUserIds.add(args.currentUserId);
+
+    const suggestedUsers = [];
+
+    for await (const user of ctx.db.query("users")) {
+      if (!excludedUserIds.has(user._id)) {
+        suggestedUsers.push(user);
+
+        if (suggestedUsers.length >= 10) {
+          break;
+        }
+      }
+    }
+
+    return suggestedUsers;
+  },
+});
+
+const searchUsers = query({
+  args: {
+    searchTerm: v.string(),
+    currentUserId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // TODO: add pagination for large datasets
+    // get user chats and filter out users who are already in the chat
+    const chats = await ctx.db
+      .query("chats")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("senderId"), args.currentUserId),
+          q.eq(q.field("receiverId"), args.currentUserId)
+        )
+      )
+      .collect();
+    const excludedUserIds = new Set(
+      chats.map((chat) => {
+        return chat.senderId === args.currentUserId
+          ? chat.receiverId
+          : chat.senderId;
+      })
+    );
+
+    // Add currentUserId to the exclusion list
+    excludedUserIds.add(args.currentUserId);
+
+    const users = await ctx.db
+      .query("users")
+      .withSearchIndex("by_search", (q) =>
+        q.search("username", args.searchTerm)
+      )
+      .filter((q) => q.neq(q.field("_id"), args.currentUserId))
+      .collect();
+
+    const filteredUsers = users.map((user) =>
+      excludedUserIds.has(user._id)
+        ? { ...user, inChat: true }
+        : { ...user, inChat: false }
+    );
+
+    return filteredUsers;
+  },
+});
+
+const setOnlineStatus = mutation({
+  args: {
+    userId: v.id("users"),
+    isOnline: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(args.userId, {
+      isOnline: args.isOnline,
+      lastSeen: args.isOnline ? undefined : Date.now(),
+    });
+  },
+});
+
+export {
+  createUser,
+  deleteUser,
+  getUserByClerkId,
+  getUserByStripeCustomerId,
+  getAllUsers,
+  getSuggestedUsers,
+  searchUsers,
+  setOnlineStatus,
+};

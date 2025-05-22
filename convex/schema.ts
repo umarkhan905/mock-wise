@@ -36,11 +36,18 @@ export default defineSchema({
     companyName: v.optional(v.string()),
     companyLogo: v.optional(v.string()),
     companyDescription: v.optional(v.string()),
+
+    // chat fields
+    isOnline: v.optional(v.boolean()),
+    lastSeen: v.optional(v.number()),
   })
     .index("by_username", ["username"])
     .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"])
-    .index("by_stripe_customer_id", ["stripeCustomerId"]),
+    .index("by_stripe_customer_id", ["stripeCustomerId"])
+    .searchIndex("by_search", {
+      searchField: "username",
+    }),
 
   notifications: defineTable({
     userId: v.id("users"),
@@ -64,7 +71,8 @@ export default defineSchema({
     .index("by_sender_id", ["senderId"])
     .index("by_receiver_id", ["receiverId"])
     .index("by_sender_id_receiver_id", ["senderId", "receiverId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_receiver_id_status", ["receiverId", "status"]),
 
   chats: defineTable({
     senderId: v.id("users"),
@@ -73,6 +81,7 @@ export default defineSchema({
 
   messages: defineTable({
     chatId: v.id("chats"),
+    senderId: v.id("users"),
     message: v.string(),
     sendAt: v.number(),
     status: v.union(
