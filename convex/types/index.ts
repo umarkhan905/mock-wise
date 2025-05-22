@@ -21,6 +21,7 @@ interface InterviewType {
   topic?: string;
   numberOfQuestions?: number;
   isScheduled?: boolean;
+  scheduledAt?: number;
   validateTill?: number;
   type: string[];
   role: string;
@@ -35,8 +36,9 @@ interface InterviewType {
   assessment: Assessment;
   category: Category;
   questions: Question[];
+  _creationTime: number;
 }
 
 type Interview = InterviewType | undefined | null;
 
-export { type Interview };
+export { type Interview, type InterviewType };
