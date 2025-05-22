@@ -22,6 +22,7 @@
     "@radix-ui/react-separator": "^1.1.6",
     "@radix-ui/react-slot": "^1.2.2",
     "@radix-ui/react-switch": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.6",
     "@vapi-ai/web": "2.2.5",
     "ai": "^4.3.15",
@@ -29,6 +30,7 @@
     "clsx": "^2.1.1",
     "convex": "^1.24.1",
     "date-fns": "^4.1.0",
+    "emoji-picker-react": "^4.12.2",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.508.0",
     "next": "15.3.2",
@@ -42,6 +44,7 @@
     "svix": "^1.64.1",
     "tailwind-merge": "^3.2.0",
     "tailwind-scrollbar-hide": "^2.0.0",
+    "usehooks-ts": "^3.1.1",
     "uuid": "^11.1.0",
     "zod": "^3.24.4"
   },
