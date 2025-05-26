@@ -67,7 +67,7 @@ export const candidateSidebarNavigation = [
   },
   {
     title: "Mock Interviews",
-    url: "/dashboard/mock-interviews",
+    url: "/dashboard/candidate/mock-interviews",
     icon: List,
   },
 
@@ -248,3 +248,18 @@ export const instructions = [
     content: "Answer the question as quickly as possible.",
   },
 ];
+
+export const defaultRecruiterFilters = {
+  status: undefined,
+  assessment: undefined,
+  difficulty: undefined,
+  experience: undefined,
+  oderBy: "desc" as const,
+};
+
+export const defaultCandidateFilters = {
+  status: undefined,
+  difficulty: undefined,
+  experience: undefined,
+  oderBy: "desc" as const,
+};

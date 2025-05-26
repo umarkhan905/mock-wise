@@ -62,3 +62,18 @@ interface Message {
   sendAt: number;
   senderId: Id<"users">;
 }
+
+interface RecruiterFilters {
+  status: string | undefined;
+  assessment: string | undefined;
+  difficulty: string | undefined;
+  experience: string | undefined;
+  oderBy: "asc" | "desc";
+}
+
+interface CandidateFilters {
+  status: string | undefined;
+  difficulty: string | undefined;
+  experience: string | undefined;
+  oderBy: "asc" | "desc";
+}
