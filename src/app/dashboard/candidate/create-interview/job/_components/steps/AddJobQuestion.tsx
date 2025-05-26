@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConvexError } from "convex/values";
 import { GenerateJobQuestions } from "../buttons/GenerateQuestions";
+import { Question } from "@/types";
 
 interface IQuestion extends Question {
   id: number;

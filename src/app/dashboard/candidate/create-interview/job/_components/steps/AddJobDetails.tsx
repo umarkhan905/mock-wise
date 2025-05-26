@@ -28,6 +28,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { Id } from "../../../../../../../../convex/_generated/dataModel";
 import { Textarea } from "@/components/ui/textarea";
 import GenerateDescription from "../buttons/GenerateDescription";
+import { Difficulty, ExperienceIn } from "@/types";
 
 interface FormData {
   title: string;
@@ -194,8 +195,6 @@ export function AddJobInterviewDetails() {
   const isButtonDisabled = Object.values(formData).some(
     (value) => value === "" || value.length === 0
   );
-
-  console.log("formData", formData);
 
   return (
     <Card>
