@@ -133,4 +133,17 @@ const getInterviews = query({
   },
 });
 
-export { getRecruiterStats, getInterviews };
+const getScheduledInterviews = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db
+      .query("interviews")
+      .withIndex("by_created_by_id", (q) => q.eq("createdById", args.userId))
+      .filter((q) => q.eq(q.field("isScheduled"), true))
+      .collect();
+  },
+});
+
+export { getRecruiterStats, getInterviews, getScheduledInterviews };
