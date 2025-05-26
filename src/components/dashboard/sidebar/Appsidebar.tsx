@@ -21,9 +21,11 @@ import {
 } from "@/constants";
 
 type UserData = {
-  name: string;
+  username: string;
+  clerkId: string;
   email: string;
-  avatar: string;
+  role: "recruiter" | "candidate" | "admin";
+  image?: string;
 };
 type SidebarFor = "candidate" | "recruiter";
 
