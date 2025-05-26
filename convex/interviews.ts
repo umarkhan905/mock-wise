@@ -19,11 +19,7 @@ const createJobInterview = mutation({
     keywords: v.array(v.string()),
     assessment: v.union(v.literal("voice"), v.literal("mcq")),
     category: v.union(v.literal("mock"), v.literal("job")),
-    createdByRole: v.union(
-      v.literal("candidate"),
-      v.literal("recruiter"),
-      v.literal("admin")
-    ),
+    createdByRole: v.union(v.literal("candidate"), v.literal("recruiter")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -38,9 +34,11 @@ const createJobInterview = mutation({
       throw new ConvexError("User not found");
     }
 
+    console.log("***args***", args);
+
     const interviewId = await ctx.db.insert("interviews", {
       createdById: args.createdById,
-      createdByRole: "recruiter",
+      createdByRole: args.createdByRole,
       title: args.title,
       role: args.role,
       description: args.description,
@@ -51,7 +49,7 @@ const createJobInterview = mutation({
       keywords: args.keywords,
       assessment: args.assessment,
       status: "pending",
-      category: "job",
+      category: args.category,
       questions: [],
     });
 
