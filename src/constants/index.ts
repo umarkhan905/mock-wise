@@ -106,6 +106,11 @@ export const recruiterSidebarNavigation = [
     icon: MessageCircle,
   },
   {
+    title: "Calendar",
+    url: "/dashboard/recruiter/calendar",
+    icon: Calendar,
+  },
+  {
     title: "Mock Wise AI",
     url: "/dashboard/recruiter/chatbot",
     icon: Bot,
