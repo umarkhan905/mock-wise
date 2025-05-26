@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -16,14 +18,29 @@ import {
 import { AppSidebar } from "@/components/dashboard/sidebar/Appsidebar";
 import { Button } from "@/components/ui/button";
 import { Bell, Settings } from "lucide-react";
-import { dummyUser } from "@/constants";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { useAuthContext } from "@/context/AuthStore";
 
 export default function Layout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { user } = useAuthContext();
+
+  const notifications = useQuery(
+    api.notifications.getNotifications,
+    user
+      ? {
+          userId: user._id,
+        }
+      : "skip"
+  );
+
+  if (!user) return null;
+
   return (
     <SidebarProvider>
-      <AppSidebar userData={dummyUser} />
+      <AppSidebar userData={user} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b sticky top-0 bg-background">
           <div className="flex items-center gap-2 px-4">
@@ -52,7 +69,9 @@ export default function Layout({
             >
               <Bell className="size-5" />
 
-              <span className="absolute top-1 right-1 size-2 rounded-full bg-primary"></span>
+              <span className="absolute top-0 -right-1 size-4 flex items-center justify-center rounded-full bg-primary text-xs">
+                {notifications?.length || 0}
+              </span>
             </Button>
 
             <Button
