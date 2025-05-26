@@ -238,3 +238,33 @@
     @apply bg-gradient-to-br from-primary via-secondary to-accent bg-clip-text text-transparent;
   }
 }
+
+.fc-toolbar-title {
+  @apply text-xl font-semibold text-primary;
+}
+
+.fc-daygrid-day-number {
+  @apply text-white font-medium;
+}
+
+.fc-today-button {
+  @apply bg-primary! text-white! capitalize! min-h-10!;
+}
+
+.fc-prev-button,
+.fc-next-button {
+  @apply bg-primary! mr-1! min-h-10! hover:bg-primary/80! transition-all duration-300;
+}
+
+.fc-scrollgrid {
+  @apply border-primary/20!;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  @apply border-primary/20!;
+}
+
+.fc-daygrid-event-harness {
+  @apply bg-primary/20 text-primary rounded-lg shadow-sm hover:bg-primary/30 transition-colors duration-200;
+}
