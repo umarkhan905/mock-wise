@@ -1,4 +1,4 @@
-import { ConvexError } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { query } from "./_generated/server";
 import { api } from "./_generated/api";
 import { InterviewType } from "./types";
@@ -95,4 +95,42 @@ const getRecruiterStats = query({
   },
 });
 
-export { getRecruiterStats };
+const getInterviews = query({
+  args: {
+    userId: v.id("users"),
+    status: v.optional(v.string()),
+    assessment: v.optional(v.string()),
+    difficulty: v.optional(v.string()),
+    experience: v.optional(v.string()),
+    orderBy: v.optional(v.union(v.literal("desc"), v.literal("asc"))),
+  },
+  handler: async (ctx, args) => {
+    let query = ctx.db
+      .query("interviews")
+      .withIndex("by_created_by_id", (q) => q.eq("createdById", args.userId));
+
+    if (args.assessment) {
+      query = query.filter((q) => q.eq(q.field("assessment"), args.assessment));
+    }
+
+    if (args.status) {
+      query = query.filter((q) => q.eq(q.field("status"), args.status));
+    }
+
+    if (args.difficulty) {
+      query = query.filter((q) => q.eq(q.field("difficulty"), args.difficulty));
+    }
+
+    if (args.experience) {
+      query = query.filter((q) =>
+        q.eq(q.field("experienceIn"), args.experience)
+      );
+    }
+
+    const interviews = await query.order(args.orderBy || "desc").collect();
+
+    return interviews;
+  },
+});
+
+export { getRecruiterStats, getInterviews };

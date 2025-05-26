@@ -1,4 +1,4 @@
-import { ConvexError } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { query } from "./_generated/server";
 import { api } from "./_generated/api";
 import { InterviewType } from "./types/index";
@@ -80,4 +80,104 @@ const getCandidateStats = query({
 
 // TODO: add practice hours, and upcoming interviews count
 
-export { getCandidateStats };
+const getCandidateMockInterviews = query({
+  args: {
+    userId: v.id("users"),
+    difficulty: v.optional(v.string()),
+    experience: v.optional(v.string()),
+    orderBy: v.optional(v.union(v.literal("desc"), v.literal("asc"))),
+    status: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    let query = ctx.db
+      .query("interviews")
+      .withIndex("by_created_by_id", (q) => q.eq("createdById", args.userId));
+
+    if (args.status) {
+      query = query.filter((q) => q.eq(q.field("status"), args.status));
+    }
+
+    if (args.difficulty) {
+      query = query.filter((q) => q.eq(q.field("difficulty"), args.difficulty));
+    }
+
+    if (args.experience) {
+      query = query.filter((q) =>
+        q.eq(q.field("experienceIn"), args.experience)
+      );
+    }
+
+    const interviews = await query.order(args.orderBy || "desc").collect();
+
+    return interviews;
+  },
+});
+
+const getCandidateJobInterviews = query({
+  args: {
+    userId: v.id("users"),
+    status: v.optional(v.string()),
+    assessment: v.optional(v.string()),
+    difficulty: v.optional(v.string()),
+    experienceIn: v.optional(v.string()),
+    orderBy: v.optional(v.union(v.literal("desc"), v.literal("asc"))),
+  },
+  handler: async (ctx, args) => {
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    // unique interview ids
+    const interviewIds = new Set(participants.map((p) => p.interviewId));
+
+    // fetch all interviews
+    const interviews = await Promise.all(
+      Array.from(interviewIds).map((id) =>
+        ctx.db
+          .query("interviews")
+          .withIndex("by_id", (q) => q.eq("_id", id))
+          .filter((q) =>
+            q.and(
+              q.eq(q.field("category"), "job"),
+              args.status ? q.eq(q.field("status"), args.status) : true,
+              args.assessment
+                ? q.eq(q.field("assessment"), args.assessment)
+                : true,
+              args.difficulty
+                ? q.eq(q.field("difficulty"), args.difficulty)
+                : true,
+              args.experienceIn
+                ? q.eq(q.field("experienceIn"), args.experienceIn)
+                : true
+            )
+          )
+          .unique()
+      )
+    );
+
+    // filter out null
+    const filteredInterviews = interviews.filter((i) => i !== null);
+
+    // sort
+    if (args.orderBy) {
+      switch (args.orderBy) {
+        case "asc":
+          filteredInterviews.sort((a, b) => a._creationTime - b._creationTime);
+          break;
+
+        default:
+          filteredInterviews.sort((a, b) => b._creationTime - a._creationTime);
+          break;
+      }
+    }
+
+    return filteredInterviews;
+  },
+});
+
+export {
+  getCandidateStats,
+  getCandidateMockInterviews,
+  getCandidateJobInterviews,
+};
