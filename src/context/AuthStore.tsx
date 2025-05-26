@@ -9,9 +9,11 @@ import { Id } from "../../convex/_generated/dataModel";
 
 type User = {
   _id: Id<"users">;
+  username: string;
   clerkId: string;
   email: string;
   role: Roles;
+  image?: string;
 };
 
 interface AuthContextProps {
