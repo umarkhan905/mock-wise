@@ -40,13 +40,19 @@ export default defineSchema({
     // chat fields
     isOnline: v.optional(v.boolean()),
     lastSeen: v.optional(v.number()),
+
+    // subscription fields
+    subscriptionId: v.optional(v.id("subscriptions")),
   })
     .index("by_username", ["username"])
     .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"])
     .index("by_stripe_customer_id", ["stripeCustomerId"])
-    .searchIndex("by_search", {
+    .searchIndex("by_search_username", {
       searchField: "username",
+    })
+    .searchIndex("by_search_email", {
+      searchField: "email",
     }),
 
   notifications: defineTable({
@@ -141,10 +147,19 @@ export default defineSchema({
     status: v.union(
       v.literal("pending"),
       v.literal("in_progress"),
-      v.literal("completed")
+      v.literal("completed"),
+      v.literal("scheduled")
     ),
-    startedAt: v.number(),
+    startedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
+
+    // additional fields for participants
+    category: v.union(v.literal("mock"), v.literal("job")),
+
+    // scheduled interview fields
+    scheduledAt: v.optional(v.number()),
+    isScheduled: v.optional(v.boolean()),
+    jobId: v.optional(v.id("_scheduled_functions")), // job id for scheduled interviews
   })
     .index("by_interview_id", ["interviewId"])
     .index("by_user_id", ["userId"])
@@ -175,4 +190,14 @@ export default defineSchema({
     .index("by_user_id", ["userId"])
     .index("by_interview_id", ["interviewId"])
     .index("by_user_interview", ["interviewId", "userId"]),
+
+  subscriptions: defineTable({
+    userId: v.id("users"),
+    plan: v.union(v.literal("free"), v.literal("standard"), v.literal("pro")),
+    currentPeriodStart: v.number(),
+    currentPeriodEnd: v.number(),
+    status: v.string(),
+    stripeSubscriptionId: v.optional(v.string()),
+    cancelAtPeriodEnd: v.optional(v.boolean()),
+  }).index("by_stripe_subscription_id", ["stripeSubscriptionId"]),
 });
