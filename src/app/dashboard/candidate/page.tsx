@@ -184,11 +184,14 @@ export default function Dashboard() {
                     {/* TODO: Add company name */}
                     <div className="text-sm">at Google</div>
                   </div>
-                  <Link href={`/candidate/interviews/${interview._id}`}>
-                    <Button variant="outline" size="sm">
-                      {interview.category === "mock" ? "Start" : "Details"}
-                    </Button>
-                  </Link>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link
+                      href={`/interview/${interview._id}/candidate/details`}
+                    >
+                      View Details
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
                 </div>
               ))}
 
