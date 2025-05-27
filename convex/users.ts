@@ -171,7 +171,7 @@ const searchUsers = query({
 
     const users = await ctx.db
       .query("users")
-      .withSearchIndex("by_search", (q) =>
+      .withSearchIndex("by_search_username", (q) =>
         q.search("username", args.searchTerm)
       )
       .filter((q) => q.neq(q.field("_id"), args.currentUserId))
@@ -205,6 +205,45 @@ const setOnlineStatus = mutation({
   },
 });
 
+const searchCandidatesForInterview = query({
+  args: {
+    searchTerm: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const searchByUsername = ctx.db
+      .query("users")
+      .withSearchIndex("by_search_username", (q) =>
+        q.search("username", args.searchTerm)
+      )
+      .filter((q) => q.eq(q.field("role"), "candidate"));
+
+    const searchByEmail = ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.searchTerm))
+      .filter((q) => q.eq(q.field("role"), "candidate"));
+
+    const users = await Promise.all([
+      searchByUsername.collect(),
+      searchByEmail.collect(),
+    ]);
+
+    // remove duplicates from both queries
+    const uniqueUsers = new Map();
+
+    // loop through each array of users
+    users.forEach((userList) => {
+      userList.forEach((user) => {
+        uniqueUsers.set(user._id, user);
+      });
+    });
+
+    // convert the map back to an array
+    const filteredUsers = Array.from(uniqueUsers.values());
+
+    return filteredUsers;
+  },
+});
+
 export {
   createUser,
   deleteUser,
@@ -214,4 +253,5 @@ export {
   getSuggestedUsers,
   searchUsers,
   setOnlineStatus,
+  searchCandidatesForInterview,
 };
