@@ -9,19 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import React, { useEffect, useState } from "react";
-import { format, setHours, setMinutes } from "date-fns";
+import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ArrowRight, CalendarIcon, Loader2 } from "lucide-react";
-
-import { cn } from "@/lib/utils";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { toast } from "sonner";
 import { useStep } from "@/hooks/useStep";
 import { jobInterviewSteps } from "@/constants";
@@ -32,11 +24,15 @@ import { getLocalStorage } from "@/utils/localstorage";
 import { ConvexError } from "convex/values";
 import FormError from "@/components/error/FormError";
 import { Input } from "@/components/ui/input";
+import { AddCandidatesModal } from "../modals/AddCandidatesModal";
+import { UserCard } from "../modals/UserCard";
+
+const CANDIDATES_LIMIT = 5; // Limit the number of candidates to show and add
 
 export default function Schedule() {
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [time, setTime] = useState<string>(""); // format: "HH:mm"
   const [interviewId, setInterviewId] = useState<Id<"interviews">>();
+  const [isReminderChecked, setIsReminderChecked] = useState<boolean>(true);
+  const [dateTime, setDateTime] = useState<string>("");
 
   const [loading, setLoading] = useState<"schedule" | "unSchedule" | null>(
     null
@@ -49,34 +45,52 @@ export default function Schedule() {
     api.interviews.getInterviewById,
     interviewId ? { interviewId } : "skip"
   );
+  const scheduledCandidates = useQuery(
+    api.participants.getScheduledParticipants,
+    interviewId ? { interviewId } : "skip"
+  );
+  const scheduleCandidate = useMutation(
+    api.participants.updateCandidateScheduledAt
+  );
+  const removeCandidate = useMutation(
+    api.participants.removeCandidateFromInterview
+  );
 
   const { nextStep, prevStep } = useStep(jobInterviewSteps);
 
   const handleScheduleInterview = async () => {
-    if (!date || !time) return toast.error("Please select a date and time.");
-
     setLoading("schedule");
     setError(null);
 
     const now = new Date();
-    let timestamp = 0;
+    const scheduledDate = new Date(dateTime);
 
-    const [hour, minute] = time.split(":").map(Number);
-    const fullDate = setMinutes(setHours(date, hour), minute);
-
-    if (fullDate <= now) {
-      alert("Please select a future date and time.");
+    if (scheduledDate < now) {
+      toast.error("Please select a future date.");
+      setLoading(null);
       return;
     }
 
-    timestamp = fullDate.getTime();
-
     try {
       await scheduleInterview({
-        scheduledAt: timestamp,
+        scheduledAt: scheduledDate.getTime(),
         isScheduled: true,
         interviewId: interviewId!,
+        validateTill: scheduledDate.getTime() + 24 * 60 * 60 * 1000, // 24 hours later after scheduling
       });
+
+      // schedule candidates if any
+      if (scheduledCandidates && scheduledCandidates.length > 0) {
+        await Promise.all(
+          scheduledCandidates.map(async (candidate) => {
+            await scheduleCandidate({
+              participantId: candidate._id,
+              scheduledAt: new Date(dateTime).getTime(),
+              jobId: candidate.jobId!,
+            });
+          })
+        );
+      }
     } catch (error) {
       console.log("Error while scheduling interview", error);
       const convexError = error as ConvexError<string>;
@@ -95,11 +109,60 @@ export default function Schedule() {
       await unScheduleInterview({
         interviewId: interviewId!,
         jobId: interview.jobId,
+        validateTill: Date.now() + 24 * 60 * 60 * 1000, // 24 hours later after un-scheduling
       });
 
-      setDate(undefined);
+      // unschedule candidates
+      if (scheduledCandidates && scheduledCandidates.length > 0) {
+        await Promise.all(
+          scheduledCandidates.map(async (candidate) => {
+            await removeCandidate({
+              interviewId: interviewId!,
+              userId: candidate.userId,
+            });
+          })
+        );
+      }
+
+      setDateTime("");
     } catch (error) {
       console.log("Error while un-scheduling interview", error);
+      const convexError = error as ConvexError<string>;
+      setError(convexError.message);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleRescheduleInterview = async () => {
+    setLoading("schedule");
+    setError(null);
+
+    const scheduledDate = new Date(dateTime);
+
+    try {
+      await scheduleInterview({
+        scheduledAt: scheduledDate.getTime(),
+        isScheduled: true,
+        interviewId: interviewId!,
+        validateTill: scheduledDate.getTime() + 24 * 60 * 60 * 1000, // 24 hours later after scheduling
+        jobId: interview?.jobId,
+      });
+
+      // reschedule candidates
+      if (scheduledCandidates && scheduledCandidates.length > 0) {
+        await Promise.all(
+          scheduledCandidates.map(async (candidate) => {
+            await scheduleCandidate({
+              participantId: candidate._id,
+              scheduledAt: new Date(dateTime).getTime(),
+              jobId: candidate.jobId!,
+            });
+          })
+        );
+      }
+    } catch (error) {
+      console.log("Error while scheduling interview", error);
       const convexError = error as ConvexError<string>;
       setError(convexError.message);
     } finally {
@@ -114,79 +177,45 @@ export default function Schedule() {
 
   useEffect(() => {
     if (interview && interview.scheduledAt) {
-      setDate(new Date(interview.scheduledAt));
-      setTime(
-        new Date(interview.scheduledAt).toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      );
+      const date = new Date(interview.scheduledAt);
+      setDateTime(format(date, "yyyy-MM-dd'T'HH:mm"));
     }
   }, [interview]);
+
+  if (scheduledCandidates === undefined) {
+    // Handle loading state
+    return <div>Loading...</div>;
+  }
 
   return (
     <Card>
       <CardHeader>
         <section className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-xl">Schedule Interview</CardTitle>
+            <CardTitle className="text-xl">
+              Schedule Interview{" "}
+              <span className="text-muted-foreground text-xs">(optional)</span>
+            </CardTitle>
             <CardDescription>
               Select the date to schedule the interview
             </CardDescription>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch id="schedule-for-candidates" />
-            <Label htmlFor="schedule-for-candidates">
-              Schedule For Candidates
-            </Label>
           </div>
         </section>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="date">Pick a date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal hover:bg-primary/20 hover:text-white bg-muted min-h-10",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon />
-                {date ? format(date, "PPP") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                fromDate={new Date()}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
         <div className="space-y-2 w-full">
-          <Label htmlFor="time">
-            Time
-            <span className="text-xs text-muted-foreground"> (optional)</span>
-          </Label>
+          <Label htmlFor="time">Schedule Interview At</Label>
           <Input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
+            type="datetime-local"
+            value={dateTime}
+            onChange={(e) => setDateTime(e.target.value)}
             className="min-h-10 w-full"
           />
         </div>
 
         <div className="flex justify-end gap-2">
-          {date && interview?.isScheduled && (
+          {dateTime && interview?.isScheduled && (
             <Button
               variant={"destructive"}
               disabled={loading === "unSchedule"}
@@ -201,11 +230,15 @@ export default function Schedule() {
             </Button>
           )}
 
-          {date && (
+          {dateTime && (
             <Button
               className="min-h-10 text-white min-w-46"
               disabled={loading === "schedule"}
-              onClick={handleScheduleInterview}
+              onClick={
+                interview?.isScheduled
+                  ? handleRescheduleInterview
+                  : handleScheduleInterview
+              }
             >
               {loading === "schedule" ? (
                 <Loader2 className="size-5 animate-spin" />
@@ -217,6 +250,49 @@ export default function Schedule() {
             </Button>
           )}
         </div>
+
+        {scheduledCandidates.length === 0 && interview?.isScheduled && (
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="schedule-for-candidates"
+              checked={isReminderChecked}
+              onCheckedChange={(checked) => setIsReminderChecked(checked)}
+            />
+            <Label htmlFor="schedule-for-candidates">
+              Add reminder for candidates
+            </Label>
+          </div>
+        )}
+
+        {scheduledCandidates.length > 0 && (
+          <div className="space-y-2">
+            <h2 className="text-lg font-medium">Scheduled Candidates</h2>
+            {scheduledCandidates.map((c) => (
+              <UserCard
+                key={c._id}
+                user={{
+                  _id: c.candidate?._id as Id<"users">,
+                  image: c.candidate?.image as string,
+                  username: c.candidate?.username as string,
+                  companyName: c.candidate?.companyName || "",
+                  role: c.candidate?.role as "candidate",
+                }}
+                interviewId={interviewId!}
+                buttonType="remove"
+              />
+            ))}
+          </div>
+        )}
+
+        {isReminderChecked &&
+          interviewId &&
+          scheduledCandidates.length < CANDIDATES_LIMIT &&
+          interview?.isScheduled && (
+            <AddCandidatesModal
+              interviewId={interviewId}
+              scheduledAt={dateTime}
+            />
+          )}
 
         {error && <FormError message={error} />}
       </CardContent>
