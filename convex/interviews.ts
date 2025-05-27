@@ -34,8 +34,6 @@ const createJobInterview = mutation({
       throw new ConvexError("User not found");
     }
 
-    console.log("***args***", args);
-
     const interviewId = await ctx.db.insert("interviews", {
       createdById: args.createdById,
       createdByRole: args.createdByRole,
@@ -160,6 +158,8 @@ const scheduleInterview = mutation({
     interviewId: v.id("interviews"),
     scheduledAt: v.number(),
     isScheduled: v.optional(v.boolean()),
+    validateTill: v.optional(v.number()),
+    jobId: v.optional(v.id("_scheduled_functions")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -176,6 +176,11 @@ const scheduleInterview = mutation({
       throw new ConvexError("User not found");
     }
 
+    if (args.jobId) {
+      // If a jobId is provided, cancel the existing scheduled job
+      await ctx.scheduler.cancel(args.jobId);
+    }
+
     // un-schedule an interview when it reaches the scheduled time
     const jobId = await ctx.scheduler.runAt(
       args.scheduledAt,
@@ -190,6 +195,7 @@ const scheduleInterview = mutation({
       scheduledAt: args.scheduledAt,
       isScheduled: args.isScheduled,
       jobId,
+      validateTill: args.validateTill,
     });
   },
 });
@@ -213,6 +219,7 @@ const unScheduleInterview = mutation({
   args: {
     interviewId: v.id("interviews"),
     jobId: v.id("_scheduled_functions"),
+    validateTill: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -234,6 +241,7 @@ const unScheduleInterview = mutation({
       scheduledAt: undefined,
       isScheduled: false,
       jobId: undefined,
+      validateTill: args.validateTill,
     });
 
     await ctx.scheduler.cancel(args.jobId);
