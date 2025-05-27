@@ -22,6 +22,7 @@ import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
 import type * as participants from "../participants.js";
 import type * as recruiter from "../recruiter.js";
+import type * as subscriptions from "../subscriptions.js";
 import type * as types_index from "../types/index.js";
 import type * as users from "../users.js";
 
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   participants: typeof participants;
   recruiter: typeof recruiter;
+  subscriptions: typeof subscriptions;
   "types/index": typeof types_index;
   users: typeof users;
 }>;
