@@ -24,35 +24,31 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useAuthContext } from "@/context/AuthStore";
 
 export default function Dashboard() {
+  const { user } = useAuthContext();
   const stats = useQuery(api.candidates.getCandidateStats);
   const router = useRouter();
+  const upcomingInterviews = useQuery(
+    api.candidates.getUpcomingInterviews,
+    user
+      ? {
+          userId: user._id,
+        }
+      : "skip"
+  );
+
+  console.log("upcomingInterviews", upcomingInterviews);
 
   // redirect to login if user is not signed in
   if (stats instanceof ConvexError && stats.message.includes("unauthorized"))
     return router.push("/");
 
-  if (stats === undefined) return <div>Loading...</div>;
+  if (stats === undefined || upcomingInterviews === undefined)
+    return <div>Loading...</div>;
 
   const recentInterviews = stats?.recent || [];
-
-  const upcomingInterviews = [
-    {
-      id: "3",
-      title: "GlobalTech Product Manager",
-      date: "2023-11-10",
-      time: "2:00 PM",
-      company: "GlobalTech Inc.",
-    },
-    {
-      id: "4",
-      title: "Data Scientist Mock Interview",
-      date: "2023-11-05",
-      time: "10:30 AM",
-      type: "mock",
-    },
-  ];
 
   return (
     <section className="space-y-8">
@@ -172,24 +168,25 @@ export default function Dashboard() {
             <div className="space-y-4">
               {upcomingInterviews.map((interview) => (
                 <div
-                  key={interview.id}
+                  key={interview._id}
                   className="flex items-center justify-between border-b border-border pb-4 last:border-0 last:pb-0"
                 >
                   <div>
                     <div className="font-medium">{interview.title}</div>
                     <div className="text-sm text-muted-foreground">
-                      {new Date(interview.date).toLocaleDateString()} •{" "}
-                      {interview.time}
+                      {new Date(interview.scheduledAt!).toLocaleDateString()} •{" "}
+                      {new Date(interview.scheduledAt!).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </div>
-                    <div className="text-sm">
-                      {interview.company
-                        ? `at ${interview.company}`
-                        : "Mock Interview"}
-                    </div>
+
+                    {/* TODO: Add company name */}
+                    <div className="text-sm">at Google</div>
                   </div>
-                  <Link href={`/candidate/interviews/${interview.id}`}>
+                  <Link href={`/candidate/interviews/${interview._id}`}>
                     <Button variant="outline" size="sm">
-                      {interview.type === "mock" ? "Start" : "Details"}
+                      {interview.category === "mock" ? "Start" : "Details"}
                     </Button>
                   </Link>
                 </div>
