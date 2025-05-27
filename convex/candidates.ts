@@ -38,6 +38,7 @@ const getCandidateStats = query({
       ctx.db
         .query("participants")
         .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+        .filter((q) => q.eq(q.field("category"), "job"))
         .order("desc")
         .collect(),
     ]);
@@ -126,6 +127,7 @@ const getCandidateJobInterviews = query({
     const participants = await ctx.db
       .query("participants")
       .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("category"), "job"))
       .collect();
 
     // unique interview ids
@@ -176,8 +178,34 @@ const getCandidateJobInterviews = query({
   },
 });
 
+const getUpcomingInterviews = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "scheduled"),
+          q.eq(q.field("isScheduled"), true),
+          q.eq(q.field("category"), "job")
+        )
+      )
+      .collect();
+
+    const upcomingInterviews = await Promise.all(
+      participants.map((p) => ctx.db.get(p.interviewId))
+    );
+
+    return upcomingInterviews.filter((i) => i !== null);
+  },
+});
+
 export {
   getCandidateStats,
   getCandidateMockInterviews,
   getCandidateJobInterviews,
+  getUpcomingInterviews,
 };
