@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { api } from "./_generated/api";
+import { internalMutation, mutation, query } from "./_generated/server";
+import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { type Interview } from "./types/index";
 
@@ -11,6 +11,101 @@ type Status =
   | "alreadyAttempted"
   | "success";
 
+const addCandidateToInterview = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    userId: v.id("users"),
+    scheduledAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const existingParticipant = await ctx.db
+      .query("participants")
+      .withIndex("by_interview_and_user", (q) =>
+        q.eq("interviewId", args.interviewId).eq("userId", args.userId)
+      )
+      .filter((q) => q.eq(q.field("category"), "job"))
+      .unique();
+
+    // If participant already exists, return existing participant ID
+    if (existingParticipant) {
+      return existingParticipant._id;
+    }
+
+    // TODO: send notification and email to user about the new interview
+
+    // If not, create a new participant
+    const participantId = await ctx.db.insert("participants", {
+      interviewId: args.interviewId,
+      userId: args.userId,
+      category: "job",
+      scheduledAt: args.scheduledAt,
+      isScheduled: true,
+      status: "scheduled",
+    });
+
+    // auto unschedule the candidate after scheduledAt reached current time
+    const jobId = await ctx.scheduler.runAt(
+      args.scheduledAt,
+      internal.participants.autoUnscheduleCandidate,
+      {
+        participantId,
+      }
+    );
+
+    // Patch the participant with the jobId for auto un-scheduling
+    await ctx.db.patch(participantId, {
+      jobId,
+    });
+
+    // Return the newly created participant ID
+    return participantId;
+  },
+});
+
+const autoUnscheduleCandidate = internalMutation({
+  args: {
+    participantId: v.id("participants"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.participantId, {
+      isScheduled: false,
+      scheduledAt: undefined,
+      status: "pending",
+      jobId: undefined, // Clear the jobId as it's no longer scheduled
+    });
+  },
+});
+
+const getScheduledParticipants = query({
+  args: {
+    interviewId: v.id("interviews"),
+  },
+  handler: async (ctx, args) => {
+    // Fetch all participants
+    const participants = await ctx.db
+      .query("participants")
+      .withIndex("by_interview_id", (q) =>
+        q.eq("interviewId", args.interviewId)
+      )
+      .collect();
+
+    // Fetch all candidates based on candidateIds
+    const candidateIds = participants.map((p) => p.userId);
+    const candidates = await Promise.all(
+      candidateIds.map((id) => ctx.db.get(id))
+    );
+
+    const candidateDetails = participants.map((participant) => {
+      const candidate = candidates.find(
+        (c) => c && c._id === participant.userId
+      );
+      return { ...participant, candidate };
+    });
+
+    return candidateDetails;
+  },
+});
+
 const createParticipant = mutation({
   args: {
     interviewId: v.id("interviews"),
@@ -18,10 +113,13 @@ const createParticipant = mutation({
     status: v.union(
       v.literal("pending"),
       v.literal("in_progress"),
-      v.literal("completed")
+      v.literal("completed"),
+      v.literal("scheduled")
     ),
-    startedAt: v.number(),
-    completedAt: v.optional(v.number()),
+    startedAt: v.optional(v.number()),
+    category: v.union(v.literal("mock"), v.literal("job")),
+    scheduledAt: v.optional(v.number()),
+    isScheduled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     return ctx.db.insert("participants", args);
@@ -105,6 +203,7 @@ const initiateParticipant = mutation({
                 userId: user._id,
                 status: "pending",
                 startedAt: Date.now(),
+                category: "mock",
               }
             );
 
@@ -130,8 +229,11 @@ const initiateParticipant = mutation({
       {
         interviewId: args.interviewId,
         userId: user._id,
-        status: "pending",
-        startedAt: Date.now(),
+        status: interview.isScheduled ? "scheduled" : "pending",
+        startedAt: interview.isScheduled ? undefined : Date.now(),
+        category: interview.category,
+        scheduledAt: interview.scheduledAt,
+        isScheduled: interview.isScheduled,
       }
     );
 
@@ -242,10 +344,69 @@ const getUserInterviewParticipation = query({
   },
 });
 
+const removeCandidateFromInterview = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const candidate = await ctx.db
+      .query("participants")
+      .withIndex("by_interview_and_user", (q) =>
+        q.eq("interviewId", args.interviewId).eq("userId", args.userId)
+      )
+      .unique();
+
+    if (!candidate) {
+      return null;
+    }
+
+    // If the candidate is scheduled, cancel the job
+    if (candidate.isScheduled && candidate.jobId) {
+      await ctx.scheduler.cancel(candidate.jobId);
+    }
+
+    // Delete the participant
+    return ctx.db.delete(candidate._id);
+  },
+});
+
+const updateCandidateScheduledAt = mutation({
+  args: {
+    participantId: v.id("participants"),
+    scheduledAt: v.number(),
+    jobId: v.id("_scheduled_functions"),
+  },
+  handler: async (ctx, args): Promise<void> => {
+    const jobIds = await Promise.all([
+      ctx.scheduler.cancel(args.jobId), // cancel existing job if any
+      // auto unschedule the candidate after scheduledAt reached current time
+      ctx.scheduler.runAt(
+        args.scheduledAt,
+        internal.participants.autoUnscheduleCandidate,
+        {
+          participantId: args.participantId,
+        }
+      ),
+    ]);
+
+    // Patch the participant with new scheduledAt and jobId
+    return ctx.db.patch(args.participantId, {
+      scheduledAt: args.scheduledAt,
+      jobId: jobIds[1],
+    });
+  },
+});
+
 export {
   createParticipant,
   initiateParticipant,
   updateParticipantStatus,
   getInterviewParticipants,
   getUserInterviewParticipation,
+  addCandidateToInterview,
+  getScheduledParticipants,
+  removeCandidateFromInterview,
+  updateCandidateScheduledAt,
+  autoUnscheduleCandidate,
 };
