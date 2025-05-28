@@ -13,12 +13,12 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { NavUser } from "./NavUser";
 import { NavMain } from "./NavMain";
 import {
   candidateSidebarNavigation,
   recruiterSidebarNavigation,
 } from "@/constants";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type UserData = {
   username: string;
@@ -74,7 +74,19 @@ export function AppSidebar({
         <NavMain items={navItems} sidebarFor={sidebarFor} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={userData} />
+        <div className="flex items-center gap-2 px-2 py-2">
+          <Avatar className="size-8 rounded-full">
+            <AvatarImage src={userData.image} alt={userData.username} />
+            <AvatarFallback className="rounded-full">
+              {userData.username.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="grid flex-1 text-left text-sm leading-tight">
+            <span className="truncate font-semibold">{userData.username}</span>
+            <span className="truncate text-xs">{userData.email}</span>
+          </div>
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
