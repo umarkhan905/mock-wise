@@ -60,6 +60,17 @@ export default defineSchema({
     title: v.string(),
     message: v.string(),
     read: v.boolean(),
+    type: v.union(
+      v.literal("interview"),
+      v.literal("system"),
+      v.literal("reminder")
+    ),
+    action: v.optional(
+      v.object({
+        label: v.string(),
+        url: v.string(),
+      })
+    ),
   })
     .index("by_user_id", ["userId"])
     .index("by_read", ["read"])
