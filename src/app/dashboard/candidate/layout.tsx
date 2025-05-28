@@ -21,20 +21,22 @@ import { Bell, Settings } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuthContext } from "@/context/AuthStore";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { SmallNotificationCard } from "@/components/dashboard/notifications/SmallNotificationCard";
 
 export default function Layout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const { user } = useAuthContext();
 
-  const notifications = useQuery(
-    api.notifications.getNotifications,
-    user
-      ? {
-          userId: user._id,
-        }
-      : "skip"
-  );
+  const notifications = useQuery(api.notifications.getUnreadNotifications);
 
   if (!user) return null;
 
@@ -62,17 +64,56 @@ export default function Layout({
           </div>
 
           <div className="flex items-center gap-2 ml-auto px-4">
-            <Button
-              variant={"ghost"}
-              className="hover:bg-primary/20 hover:text-white relative"
-              size={"icon"}
-            >
-              <Bell className="size-5" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={"ghost"}
+                  className="hover:bg-primary/20 hover:text-white relative"
+                  size={"icon"}
+                >
+                  <Bell className="size-5" />
 
-              <span className="absolute top-0 -right-1 size-4 flex items-center justify-center rounded-full bg-primary text-xs">
-                {notifications?.length || 0}
-              </span>
-            </Button>
+                  <span className="absolute top-0 -right-1 size-4 flex items-center justify-center rounded-full bg-primary text-xs">
+                    {notifications?.length || 0}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>
+                  Latest Unread Notifications
+                  <Badge
+                    className="ml-2 size-5 rounded-full bg-primary/60"
+                    variant="outline"
+                  >
+                    {notifications?.length || 0}
+                  </Badge>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="p-1 space-y-2">
+                  {notifications && notifications.length === 0 && (
+                    <div className="text-center py-4 px-2">
+                      <Bell className="size-8 text-muted-foreground mx-auto mb-3" />
+                      <h3 className="font-medium mb-2">No notifications</h3>
+                      <p className="text-muted-foreground text-sm">
+                        You&apos;re all caught up! No unread notifications.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* notifications */}
+                  {notifications &&
+                    notifications.length > 0 &&
+                    notifications
+                      .slice(0, 3)
+                      .map((notification) => (
+                        <SmallNotificationCard
+                          key={notification._id}
+                          notification={notification}
+                        />
+                      ))}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Button
               variant={"ghost"}
