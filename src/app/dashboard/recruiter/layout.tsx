@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/breadcrumb";
 import { AppSidebar } from "@/components/dashboard/sidebar/Appsidebar";
 import { Button } from "@/components/ui/button";
-import { Bell, Settings } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useAuthContext } from "@/context/AuthStore";
+import { UserProfile } from "@/components/dashboard/sidebar/custom-user-pages/UserProfile";
 
 export default function Layout({
   children,
@@ -50,7 +51,7 @@ export default function Layout({
             </Breadcrumb>
           </div>
 
-          <div className="flex items-center gap-2 ml-auto px-4">
+          <div className="flex items-center gap-4 ml-auto px-4">
             <Button
               variant={"ghost"}
               className="hover:bg-primary/20 hover:text-white relative"
@@ -61,13 +62,7 @@ export default function Layout({
               <span className="absolute top-1 right-1 size-2 rounded-full bg-primary"></span>
             </Button>
 
-            <Button
-              variant={"ghost"}
-              className="hover:bg-primary/20 hover:text-white"
-              size={"icon"}
-            >
-              <Settings className="size-5" />
-            </Button>
+            <UserProfile />
           </div>
         </header>
         <main className="p-5">{children}</main>
