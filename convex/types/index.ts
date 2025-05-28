@@ -6,6 +6,7 @@ type Assessment = "voice" | "mcq";
 type Category = "mock" | "job";
 type CreatedByRole = "candidate" | "recruiter";
 type InterviewStatus = "pending" | "scheduled" | "created" | "expired";
+type NotificationType = "interview" | "system" | "reminder";
 
 interface Question {
   question: string;
@@ -41,4 +42,18 @@ interface InterviewType {
 
 type Interview = InterviewType | undefined | null;
 
-export { type Interview, type InterviewType };
+interface Notification {
+  _id: Id<"notifications">;
+  userId: Id<"users">;
+  title: string;
+  message: string;
+  read: boolean;
+  type: NotificationType;
+  action?: {
+    label: string;
+    url: string;
+  };
+  _creationTime: number;
+}
+
+export { type Interview, type InterviewType, type Notification };

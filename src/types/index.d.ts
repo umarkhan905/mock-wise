@@ -6,6 +6,8 @@ type Assessment = "voice" | "mcq";
 type Category = "mock" | "job";
 type CreatedByRole = "candidate" | "recruiter";
 type InterviewStatus = "pending" | "scheduled" | "created" | "expired";
+type Filters = "all" | "unread" | "read";
+type NotificationType = "all" | "interview" | "system" | "reminder";
 
 interface AddDetails {
   title: string;
@@ -76,4 +78,18 @@ interface CandidateFilters {
   difficulty: string | undefined;
   experience: string | undefined;
   oderBy: "asc" | "desc";
+}
+
+interface Notification {
+  _id: Id<"notifications">;
+  userId: Id<"users">;
+  title: string;
+  message: string;
+  read: boolean;
+  type: "interview" | "system" | "reminder";
+  action?: {
+    label: string;
+    url: string;
+  };
+  _creationTime: number;
 }
