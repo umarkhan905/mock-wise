@@ -78,6 +78,7 @@ export function PreviewTopicInterview() {
           title: "Interview is ready",
           message: "You can start the interview process now",
           read: false,
+          type: "interview",
         }),
       ]);
 
