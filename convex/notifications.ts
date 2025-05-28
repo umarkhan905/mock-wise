@@ -59,6 +59,31 @@ const getNotifications = query({
   },
 });
 
+const getUnreadNotifications = query({
+  handler: async (ctx): Promise<Notification[]> => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return ctx.db
+      .query("notifications")
+      .withIndex("by_user_id", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("read"), false))
+      .order("desc")
+      .collect();
+  },
+});
+
 const markNotificationAsRead = mutation({
   args: {
     notificationId: v.id("notifications"),
@@ -134,4 +159,5 @@ export {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteAllNotifications,
+  getUnreadNotifications,
 };
