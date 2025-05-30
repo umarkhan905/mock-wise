@@ -25,6 +25,8 @@ import { Button } from "@/components/ui/button";
 import FormError from "@/components/error/FormError";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Id } from "../../../../../../../../convex/_generated/dataModel";
+import { Difficulty } from "@/types";
+import { toast } from "sonner";
 
 interface FormData {
   title: string;
@@ -101,6 +103,17 @@ export function AddTopicDetails() {
     } catch (error) {
       console.log("Error while creating interview", error);
       const convexError = error as ConvexError<string>;
+
+      const interviewLimitError =
+        "Interview limit reached! Please upgrade your plan or buy more interview";
+
+      // check if error message contains interview limit error
+      if (convexError.message.includes(interviewLimitError)) {
+        toast.error(interviewLimitError);
+        return setError(interviewLimitError);
+      }
+
+      // set error
       setError(convexError.message);
     } finally {
       setLoading(false);

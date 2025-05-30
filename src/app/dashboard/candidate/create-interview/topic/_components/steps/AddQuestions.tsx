@@ -22,19 +22,19 @@ import FormError from "@/components/error/FormError";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConvexError } from "convex/values";
+import { Question } from "@/types";
 
 interface IQuestion extends Question {
   id: number;
   timeLimit: number;
 }
 
-const QUESTIONS_LIMIT = 10;
-
 export function AddTopicQuestions() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [questions, setQuestions] = useState<IQuestion[]>([]);
   const [interviewId, setInterviewId] = useState<Id<"interviews">>();
+  const [aiBasedQuestions, setAiBasedQuestions] = useState<number>(0);
 
   //   step-hook
   const { prevStep, nextStep } = useStep(mockInterviewSteps);
@@ -44,6 +44,14 @@ export function AddTopicQuestions() {
   const interview = useQuery(
     api.interviews.getInterviewById,
     interviewId ? { interviewId } : "skip"
+  );
+  const planUsage = useQuery(
+    api.usage.getUserUsage,
+    interview
+      ? {
+          userId: interview.createdById,
+        }
+      : "skip"
   );
 
   const handleAddQuestions = async () => {
@@ -96,7 +104,13 @@ export function AddTopicQuestions() {
     }
   }, [interview]);
 
-  const isLimitReached = questions.length >= QUESTIONS_LIMIT;
+  useEffect(() => {
+    if (planUsage) {
+      setAiBasedQuestions(planUsage.aiBasedQuestions);
+    }
+  }, [planUsage]);
+
+  const isLimitReached = questions.length >= aiBasedQuestions;
   const isButtonDisabled =
     questions.length === 0 || questions.some((q) => !q.question?.trim());
 
@@ -114,7 +128,7 @@ export function AddTopicQuestions() {
             isLimitReached={isLimitReached}
             setQuestions={setQuestions}
             setError={setError}
-            numberOfQuestions={QUESTIONS_LIMIT - questions.length}
+            numberOfQuestions={aiBasedQuestions}
           />
         )}
 
