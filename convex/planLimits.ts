@@ -15,7 +15,9 @@ const canCreateInterviews = query({
       throw new ConvexError("Plan not found.");
     }
 
-    return usage.interviews.used < usage.interviews.total;
+    const isLimitReached = usage.interviews.total < 1;
+
+    return !isLimitReached;
   },
 });
 
