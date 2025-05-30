@@ -6,6 +6,7 @@ import { Brain, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { api } from "../../../../../../../convex/_generated/api";
 import { ConvexError } from "convex/values";
+import { AddDetails } from "@/types";
 
 interface Props {
   formData: AddDetails;

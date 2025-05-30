@@ -7,6 +7,7 @@ import { api } from "../../../../../../../convex/_generated/api";
 import { useAction } from "convex/react";
 import { ConvexError } from "convex/values";
 import { Question } from "../steps/AddQuestions";
+import { Assessment, Interview } from "@/types";
 
 interface Props {
   interview: Interview;
@@ -76,6 +77,7 @@ export default function GenerateQuestions({
           timeLimit: 60,
           answer: q.answer,
           explanation: q.explanation,
+          isAiBased: true,
         })),
       ]);
     } catch (error) {
