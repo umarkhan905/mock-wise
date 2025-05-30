@@ -81,6 +81,15 @@ const getUserByStripeCustomerId = query({
   },
 });
 
+const getUserById = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
 const getAllUsers = query({
   args: {
     currentUserId: v.id("users"),
@@ -249,6 +258,7 @@ export {
   deleteUser,
   getUserByClerkId,
   getUserByStripeCustomerId,
+  getUserById,
   getAllUsers,
   getSuggestedUsers,
   searchUsers,
