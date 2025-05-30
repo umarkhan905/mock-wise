@@ -29,6 +29,7 @@ import { Id } from "../../../../../../../../convex/_generated/dataModel";
 import { Textarea } from "@/components/ui/textarea";
 import GenerateDescription from "../buttons/GenerateDescription";
 import { Difficulty, ExperienceIn } from "@/types";
+import { toast } from "sonner";
 
 interface FormData {
   title: string;
@@ -127,6 +128,17 @@ export function AddJobInterviewDetails() {
     } catch (error) {
       console.log("Error while creating interview", error);
       const convexError = error as ConvexError<string>;
+
+      const interviewLimitError =
+        "Interview limit reached! Please upgrade your plan or buy more interview";
+
+      // check if error message contains interview limit error
+      if (convexError.message.includes(interviewLimitError)) {
+        toast.error(interviewLimitError);
+        return setError(interviewLimitError);
+      }
+
+      // set error
       setError(convexError.message);
     } finally {
       setLoading(false);

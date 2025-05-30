@@ -29,13 +29,12 @@ interface IQuestion extends Question {
   timeLimit: number;
 }
 
-const QUESTIONS_LIMIT = 10;
-
 export function AddJobInterviewQuestion() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [questions, setQuestions] = useState<IQuestion[]>([]);
   const [interviewId, setInterviewId] = useState<Id<"interviews">>();
+  const [aiBasedQuestions, setAiBasedQuestions] = useState<number>(0);
 
   //   step-hook
   const { prevStep, nextStep } = useStep(mockInterviewSteps);
@@ -45,6 +44,14 @@ export function AddJobInterviewQuestion() {
   const interview = useQuery(
     api.interviews.getInterviewById,
     interviewId ? { interviewId } : "skip"
+  );
+  const planUsage = useQuery(
+    api.usage.getUserUsage,
+    interview
+      ? {
+          userId: interview.createdById,
+        }
+      : "skip"
   );
 
   const handleAddQuestions = async () => {
@@ -97,7 +104,13 @@ export function AddJobInterviewQuestion() {
     }
   }, [interview]);
 
-  const isLimitReached = questions.length >= QUESTIONS_LIMIT;
+  useEffect(() => {
+    if (planUsage) {
+      setAiBasedQuestions(planUsage.aiBasedQuestions);
+    }
+  }, [planUsage]);
+
+  const isLimitReached = questions.length >= aiBasedQuestions;
   const isButtonDisabled =
     questions.length === 0 || questions.some((q) => !q.question?.trim());
 
@@ -115,7 +128,7 @@ export function AddJobInterviewQuestion() {
             isLimitReached={isLimitReached}
             setQuestions={setQuestions}
             setError={setError}
-            numberOfQuestions={QUESTIONS_LIMIT - questions.length}
+            numberOfQuestions={aiBasedQuestions}
           />
         )}
 
