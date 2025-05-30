@@ -27,17 +27,15 @@ import { Input } from "@/components/ui/input";
 import { AddCandidatesModal } from "../modals/AddCandidatesModal";
 import { UserCard } from "../modals/UserCard";
 
-const CANDIDATES_LIMIT = 5; // Limit the number of candidates to show and add
-
 export default function Schedule() {
   const [interviewId, setInterviewId] = useState<Id<"interviews">>();
   const [isReminderChecked, setIsReminderChecked] = useState<boolean>(true);
   const [dateTime, setDateTime] = useState<string>("");
-
   const [loading, setLoading] = useState<"schedule" | "unSchedule" | null>(
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [maxCandidates, setMaxCandidates] = useState<number>(0);
 
   const scheduleInterview = useMutation(api.interviews.scheduleInterview);
   const unScheduleInterview = useMutation(api.interviews.unScheduleInterview);
@@ -54,6 +52,14 @@ export default function Schedule() {
   );
   const removeCandidate = useMutation(
     api.participants.removeCandidateFromInterview
+  );
+  const planUsage = useQuery(
+    api.usage.getUserUsage,
+    interview
+      ? {
+          userId: interview.createdById,
+        }
+      : "skip"
   );
 
   const { nextStep, prevStep } = useStep(jobInterviewSteps);
@@ -182,6 +188,12 @@ export default function Schedule() {
     }
   }, [interview]);
 
+  useEffect(() => {
+    if (planUsage) {
+      setMaxCandidates(planUsage.candidatesPerInterview);
+    }
+  }, [planUsage]);
+
   if (scheduledCandidates === undefined) {
     // Handle loading state
     return <div>Loading...</div>;
@@ -286,7 +298,7 @@ export default function Schedule() {
 
         {isReminderChecked &&
           interviewId &&
-          scheduledCandidates.length < CANDIDATES_LIMIT &&
+          scheduledCandidates.length < maxCandidates &&
           interview?.isScheduled && (
             <AddCandidatesModal
               interviewId={interviewId}
