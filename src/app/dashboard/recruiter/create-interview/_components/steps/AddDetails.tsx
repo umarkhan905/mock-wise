@@ -17,6 +17,8 @@ import { getLocalStorage, setLocalStorage } from "@/utils/localstorage";
 import { useStep } from "@/hooks/useStep";
 import { ConvexError } from "convex/values";
 import { jobInterviewSteps } from "@/constants";
+import type { AddDetails, Assessment, Difficulty, ExperienceIn } from "@/types";
+import { toast } from "sonner";
 
 interface Props {
   assessment: Assessment;
@@ -80,6 +82,17 @@ export function AddDetails({ assessment }: Props) {
     } catch (error) {
       console.log("Error while creating interview", error);
       const convexError = error as ConvexError<string>;
+
+      const interviewLimitError =
+        "Interview limit reached! Please upgrade your plan or buy more interview";
+
+      // check if error message contains interview limit error
+      if (convexError.message.includes(interviewLimitError)) {
+        toast.error(interviewLimitError);
+        return setError(interviewLimitError);
+      }
+
+      // show error
       setError(convexError.message);
     } finally {
       setLoading(false);
