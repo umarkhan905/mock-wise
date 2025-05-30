@@ -4,6 +4,7 @@ import { WebhookEvent } from "@clerk/nextjs/server";
 import { Webhook } from "svix";
 import { stripe } from "../src/lib/stripe";
 import { api } from "./_generated/api";
+import { PLAN_LIMITS } from "../src/utils/plans-limits";
 
 type Role = "admin" | "candidate" | "recruiter";
 type Metadata = {
@@ -66,7 +67,7 @@ const clerkWebhook = httpAction(async (ctx, request) => {
         });
 
         // create convex user
-        const user = await ctx.runMutation(api.users.createUser, {
+        const userId = await ctx.runMutation(api.users.createUser, {
           email,
           clerkId: id,
           stripeCustomerId: customer.id,
@@ -76,11 +77,27 @@ const clerkWebhook = httpAction(async (ctx, request) => {
           companyName: metadata.companyName || undefined,
         });
 
-        if (!user) {
+        if (!userId) {
           return new Response("Error creating user", {
             status: 400,
           });
         }
+
+        const plan = PLAN_LIMITS["free"];
+
+        // create new plan usage
+        await ctx.runMutation(api.usage.createPlanUsage, {
+          userId,
+          plan: "free",
+          interviews: { total: plan.interviews, used: 0 },
+          aiBasedQuestions: plan.aiBasedQuestions,
+          questionsPerInterview: plan.questionsPerInterview,
+          attemptsPerInterview: plan.attemptsPerInterview,
+          candidatesPerInterview: plan.candidatesPerInterview,
+          period: Date.now(),
+        });
+
+        // TODO: add scheduler to create new plan usage after 30 days
 
         return new Response("User created", {
           status: 201,
