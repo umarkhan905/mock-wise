@@ -34,6 +34,22 @@ const createJobInterview = mutation({
       throw new ConvexError("User not found");
     }
 
+    // check either user has interview credits or not
+    const canCreateInterviews = await ctx.runQuery(
+      api.planLimits.canCreateInterviews,
+      {
+        userId: args.createdById,
+      }
+    );
+
+    // if user has no interview credits
+    if (!canCreateInterviews) {
+      throw new ConvexError(
+        "Interview limit reached! Please upgrade your plan or buy more interview."
+      );
+    }
+
+    // create new interview
     const interviewId = await ctx.db.insert("interviews", {
       createdById: args.createdById,
       createdByRole: args.createdByRole,
@@ -49,6 +65,11 @@ const createJobInterview = mutation({
       status: "pending",
       category: args.category,
       questions: [],
+    });
+
+    // decrement user interview credits
+    await ctx.runMutation(api.usage.decrementInterviews, {
+      userId: args.createdById,
     });
 
     return interviewId;
