@@ -21,6 +21,8 @@ import FormError from "@/components/error/FormError";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Assessment } from "@/types";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   assessment: Assessment;
@@ -34,15 +36,30 @@ export interface Question {
   timeLimit: number;
   answer: string;
   explanation?: string;
+  isAiBased?: boolean;
 }
 
-const QUESTIONS_LIMIT = 10;
+const getAIBasedQuestionsLimit = (
+  questions: Question[],
+  maxQuestions: number,
+  aiBasedQuestions: number
+) => {
+  const existingAIQuestions = questions.filter((q) => q.isAiBased).length;
+  const remainingSlots = maxQuestions - questions.length;
+  const remainingAI = aiBasedQuestions - existingAIQuestions;
+
+  const aiQuestionsToGenerate = Math.min(remainingSlots, remainingAI);
+
+  return aiQuestionsToGenerate;
+};
 
 export default function AddQuestions({ assessment }: Props) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [interviewId, setInterviewId] = useState<Id<"interviews">>();
+  const [maxQuestions, setMaxQuestions] = useState<number>(0);
+  const [aiBasedQuestions, setAiBasedQuestions] = useState<number>(0);
 
   // step-hook
   const { nextStep, prevStep } = useStep(jobInterviewSteps);
@@ -53,10 +70,25 @@ export default function AddQuestions({ assessment }: Props) {
     api.interviews.getInterviewById,
     interviewId ? { interviewId } : "skip"
   );
+  const planUsage = useQuery(
+    api.usage.getUserUsage,
+    interview
+      ? {
+          userId: interview.createdById,
+        }
+      : "skip"
+  );
+
+  // ai based questions limit
+  const aiBasedQuestionsLimit = getAIBasedQuestionsLimit(
+    questions,
+    maxQuestions,
+    aiBasedQuestions
+  );
 
   // actions
   const addQuestion = () => {
-    if (questions.length >= QUESTIONS_LIMIT) return;
+    if (questions.length >= maxQuestions) return;
 
     const newQuestion = {
       id: questions.length + 1,
@@ -135,7 +167,9 @@ export default function AddQuestions({ assessment }: Props) {
     }
   };
 
-  const isLimitReached = questions.length >= QUESTIONS_LIMIT;
+  const isLimitReached = questions.length >= maxQuestions;
+  const isAIBasedLimitReached =
+    questions.filter((q) => q.isAiBased).length >= aiBasedQuestions;
   const isButtonDisabled =
     questions.length === 0 ||
     (assessment === "mcq" &&
@@ -170,6 +204,14 @@ export default function AddQuestions({ assessment }: Props) {
     }
   }, [interview, assessment]);
 
+  // plan usage
+  useEffect(() => {
+    if (planUsage) {
+      setMaxQuestions(planUsage.questionsPerInterview || 0);
+      setAiBasedQuestions(planUsage.aiBasedQuestions || 0);
+    }
+  }, [planUsage]);
+
   return (
     <Card>
       <CardHeader>
@@ -182,9 +224,9 @@ export default function AddQuestions({ assessment }: Props) {
           </div>
 
           <GenerateQuestions
-            numberOfQuestions={QUESTIONS_LIMIT - questions.length}
+            numberOfQuestions={aiBasedQuestionsLimit}
             interview={interview}
-            isLimitReached={isLimitReached}
+            isLimitReached={isLimitReached || isAIBasedLimitReached}
             assessment={assessment}
             setError={setError}
             setQuestions={setQuestions}
@@ -200,7 +242,19 @@ export default function AddQuestions({ assessment }: Props) {
               className="mb-8 pb-8 border-b border-white/10 last:border-0 last:mb-0 last:pb-0"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-medium">Question {index + 1}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium">Question {index + 1}</h3>
+
+                  {/* AI Generated Question */}
+                  {question.isAiBased && (
+                    <Badge
+                      variant={"outline"}
+                      className="rounded-full text-primary bg-primary/10"
+                    >
+                      AI Generated
+                    </Badge>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
