@@ -207,8 +207,26 @@ export default defineSchema({
     plan: v.union(v.literal("free"), v.literal("standard"), v.literal("pro")),
     currentPeriodStart: v.number(),
     currentPeriodEnd: v.number(),
-    status: v.string(),
+    status: v.union(
+      v.literal("active"),
+      v.literal("canceled"),
+      v.literal("expired")
+    ),
     stripeSubscriptionId: v.optional(v.string()),
     cancelAtPeriodEnd: v.optional(v.boolean()),
   }).index("by_stripe_subscription_id", ["stripeSubscriptionId"]),
+
+  planUsage: defineTable({
+    userId: v.id("users"),
+    plan: v.union(v.literal("free"), v.literal("standard"), v.literal("pro")),
+    period: v.number(),
+    interviews: v.object({
+      total: v.number(),
+      used: v.number(),
+    }),
+    aiBasedQuestions: v.number(),
+    questionsPerInterview: v.number(),
+    attemptsPerInterview: v.number(),
+    candidatesPerInterview: v.number(),
+  }).index("by_user_id", ["userId"]),
 });
