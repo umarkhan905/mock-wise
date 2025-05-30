@@ -9,6 +9,7 @@ import { jobInterviewSteps, jobInterviewTabs } from "@/constants";
 import { AddDetails } from "../_components/steps/AddDetails";
 import AddQuestions from "../_components/steps/AddQuestions";
 import PreviewLink from "../_components/steps/PreviewLink";
+import Schedule from "../_components/steps/Schedule";
 
 export default function MCQInterview() {
   const { step } = useStep(jobInterviewSteps);
@@ -47,6 +48,7 @@ export default function MCQInterview() {
         {/* Forms */}
         {step === "add-details" && <AddDetails assessment="mcq" />}
         {step === "add-question" && <AddQuestions assessment="mcq" />}
+        {step === "schedule-interview" && <Schedule />}
         {step === "preview" && <PreviewLink />}
       </div>
     </section>
