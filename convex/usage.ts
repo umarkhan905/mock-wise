@@ -50,4 +50,35 @@ const decrementInterviews = mutation({
   },
 });
 
-export { getUserUsage, createPlanUsage, decrementInterviews };
+const updateUserInterviewCredits = mutation({
+  args: {
+    userId: v.id("users"),
+    interviewCredits: v.number(),
+  },
+  handler: async (ctx, args): Promise<void> => {
+    const usage = await ctx.runQuery(api.usage.getUserUsage, {
+      userId: args.userId,
+    });
+
+    if (!usage) {
+      throw new ConvexError("Plan not found.");
+    }
+
+    const oldInterviewCredits = usage.interviews.total;
+    const oldInterviewsUsed = usage.interviews.used;
+
+    return await ctx.db.patch(usage._id, {
+      interviews: {
+        total: oldInterviewCredits + args.interviewCredits,
+        used: oldInterviewsUsed,
+      },
+    });
+  },
+});
+
+export {
+  getUserUsage,
+  createPlanUsage,
+  decrementInterviews,
+  updateUserInterviewCredits,
+};
