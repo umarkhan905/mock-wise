@@ -229,4 +229,33 @@ export default defineSchema({
     attemptsPerInterview: v.number(),
     candidatesPerInterview: v.number(),
   }).index("by_user_id", ["userId"]),
+
+  purchases: defineTable({
+    userId: v.id("users"),
+    interviewPackId: v.optional(v.id("interviewPacks")),
+    title: v.string(),
+    description: v.string(),
+    purchaseDate: v.number(),
+    amount: v.number(),
+    stripePurchaseId: v.string(),
+  }),
+
+  interviewPacks: defineTable({
+    name: v.string(),
+    description: v.string(),
+    price: v.number(),
+    stripeProductId: v.string(),
+    stripePriceId: v.string(),
+    interviewCredits: v.number(),
+    popular: v.boolean(),
+    icon: v.string(),
+    discountPercent: v.number(),
+    isDiscounted: v.boolean(),
+    keyword: v.union(
+      v.literal("starter"),
+      v.literal("professional"),
+      v.literal("enterprise"),
+      v.literal("unlimited")
+    ),
+  }).index("by_keyword", ["keyword"]),
 });
