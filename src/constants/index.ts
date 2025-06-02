@@ -5,6 +5,7 @@ import {
   CalendarClock,
   ClipboardList,
   Code,
+  CreditCard,
   FileText,
   Flame,
   Landmark,
@@ -87,6 +88,11 @@ export const candidateSidebarNavigation = [
     icon: Calendar,
   },
   {
+    title: "Billing",
+    url: "/dashboard/candidate/billing",
+    icon: CreditCard,
+  },
+  {
     title: "Mock Wise AI",
     url: "/dashboard/candidate/chatbot",
     icon: Bot,
@@ -114,6 +120,11 @@ export const recruiterSidebarNavigation = [
     title: "Calendar",
     url: "/dashboard/recruiter/calendar",
     icon: Calendar,
+  },
+  {
+    title: "Billing",
+    url: "/dashboard/recruiter/billing",
+    icon: CreditCard,
   },
   {
     title: "Mock Wise AI",
