@@ -93,3 +93,19 @@ interface Notification {
   };
   _creationTime: number;
 }
+
+interface PlanUsage {
+  _id: Id<"planUsage">;
+  _creationTime: number;
+  interviews: {
+    total: number;
+    used: number;
+  };
+  userId: Id<"users">;
+  plan: "free" | "standard" | "pro";
+  period: number;
+  aiBasedQuestions: number;
+  questionsPerInterview: number;
+  attemptsPerInterview: number;
+  candidatesPerInterview: number;
+}
