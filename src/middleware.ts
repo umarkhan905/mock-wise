@@ -19,10 +19,16 @@ const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isCommonRoute = createRouteMatcher([
   "/interview/:interviewId/feedback/:feedbackId",
 ]);
+const isApiRoute = createRouteMatcher(["/api(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   const user = await auth();
   const role = user.sessionClaims?.metadata?.role ?? "candidate";
+
+  // handle api routes
+  if (isApiRoute(req)) {
+    return NextResponse.next();
+  }
 
   // handle un-authenticated users and not on public routes
   if (!user.userId && !isPublicRoute(req)) {
