@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Card,
   CardContent,
@@ -7,7 +9,15 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Box, Check, Crown, Zap } from "lucide-react";
+import { Box, Check, Crown, Loader2, Zap } from "lucide-react";
+import { useAction } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { isDowngrade } from "@/utils/subscriptions";
+import { formatDate } from "date-fns";
+import { Subscription } from "@/types";
 
 const plans = [
   {
@@ -26,8 +36,8 @@ const plans = [
     popular: false,
   },
   {
-    id: "basic",
-    name: "Basic",
+    id: "standard",
+    name: "Standard",
     icon: Box,
     price: 19,
     description: "Best option for small teams",
@@ -58,10 +68,110 @@ const plans = [
 ];
 
 interface Props {
-  currenPlan: "free" | "standard" | "pro";
+  subscription: Subscription;
 }
 
-export function AvailablePlans({ currenPlan }: Props) {
+type Plan = "standard" | "pro";
+
+export function AvailablePlans({ subscription }: Props) {
+  const [loading, setLoading] = useState<Plan | null>(null);
+
+  // actions
+  const createCheckoutSession = useAction(
+    api.stripe.createSubscriptionCheckoutSession
+  );
+  const downgradeSubscription = useAction(
+    api.subscriptions.downgradeUserSubscription
+  );
+  const resubscribeToCurrentPlan = useAction(
+    api.subscriptions.resubscribeToCurrentPlan
+  );
+
+  // router
+  const router = useRouter();
+
+  const handleCheckout = async (plan: Plan) => {
+    setLoading(plan);
+    try {
+      const { checkoutURL } = await createCheckoutSession({ plan });
+
+      if (checkoutURL) {
+        router.push(checkoutURL);
+      }
+    } catch (error) {
+      console.log("Error while creating checkout session", error);
+      toast.error("Something went wrong creating checkout session");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleDowngrade = async (
+    nextPlan: Plan,
+    stripeSubscriptionId: string
+  ) => {
+    setLoading(nextPlan);
+    try {
+      await downgradeSubscription({
+        nextPlan,
+        stripeSubscriptionId,
+      });
+      toast.success(
+        `Successfully subscribed to ${nextPlan} plan. You will be migrate to ${nextPlan} plan after the current billing period ends.`
+      );
+    } catch (error) {
+      console.log("Error while downgrading subscription", error);
+      toast.error("Something went wrong downgrading subscription");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleResubscribe = async (
+    stripeSubscriptionId: string,
+    plan: Plan
+  ) => {
+    setLoading(plan);
+    try {
+      await resubscribeToCurrentPlan({
+        stripeSubscriptionId,
+      });
+      toast.success(`Successfully re-subscribed to ${plan} plan.`);
+    } catch (error) {
+      console.log("Error while downgrading subscription", error);
+      toast.error("Something went wrong downgrading subscription");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handlePlanClick = async (plan: Plan) => {
+    if (!subscription) return;
+
+    if (
+      subscription.plan === plan &&
+      subscription.nextPlan &&
+      subscription.cancelAtPeriodEnd
+    ) {
+      // handle resubscribe
+      await handleResubscribe(subscription.stripeSubscriptionId!, plan);
+      return;
+    }
+
+    if (isDowngrade(subscription.plan, plan)) {
+      // handle downgrade case
+      await handleDowngrade(plan, subscription.stripeSubscriptionId!);
+
+      return;
+    } else {
+      // handle checkout for new plan
+      await handleCheckout(plan);
+      return;
+    }
+  };
+
+  if (subscription === undefined) return null;
+
   return (
     <div className="space-y-6">
       <div>
@@ -77,11 +187,23 @@ export function AvailablePlans({ currenPlan }: Props) {
           return (
             <Card
               key={plan.id}
-              className={`relative ${currenPlan === plan.id ? "ring-2 ring-primary" : ""} ${plan.popular ? "border-primary" : ""}`}
+              className={`relative ${subscription.plan === plan.id ? "ring-2 ring-primary" : ""} ${plan.popular ? "border-primary" : ""}`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                   <Badge className="bg-primary text-white">Most Popular</Badge>
+                </div>
+              )}
+
+              {(subscription.plan === plan.id ||
+                subscription.nextPlan === plan.id) && (
+                <div className="absolute top-3 right-3">
+                  <Badge
+                    className={`rounded-full ${subscription.nextPlan === plan.id ? "bg-secondary" : "bg-primary/20 text-primary"}`}
+                    variant={"outline"}
+                  >
+                    {subscription.plan === plan.id ? "Active" : "Upcoming"}
+                  </Badge>
                 </div>
               )}
 
@@ -110,13 +232,36 @@ export function AvailablePlans({ currenPlan }: Props) {
                 </ul>
 
                 <Button
-                  className="w-full"
-                  variant={currenPlan === plan.id ? "secondary" : "default"}
-                  disabled={currenPlan === plan.id}
+                  className="w-full text-white"
+                  variant={
+                    subscription.plan === plan.id ? "secondary" : "default"
+                  }
+                  disabled={
+                    (subscription.plan === plan.id &&
+                      !subscription.cancelAtPeriodEnd) ||
+                    loading === plan.id ||
+                    subscription.nextPlan === plan.id
+                  }
+                  onClick={() => handlePlanClick(plan.id as Plan)}
                 >
-                  {currenPlan === plan.id
-                    ? "Current Plan"
-                    : `Upgrade to ${plan.name}`}
+                  {loading === plan.id ? (
+                    <>
+                      <Loader2 className="animate-spin size-5" />
+                      <span>Processing...</span>
+                    </>
+                  ) : subscription.plan === plan.id ? (
+                    subscription.nextPlan && subscription.cancelAtPeriodEnd ? (
+                      "Resubscribe Plan"
+                    ) : (
+                      "Current Plan"
+                    )
+                  ) : subscription.nextPlan === plan.id ? (
+                    `Plan Starts on ${formatDate(new Date(subscription.currentPeriodEnd * 1000), "MMM dd, yyyy")}`
+                  ) : isDowngrade(subscription.plan, plan.id as Plan) ? (
+                    `Switch to ${plan.name} Plan`
+                  ) : (
+                    `Upgrade to ${plan.name} Plan`
+                  )}
                 </Button>
               </CardContent>
             </Card>
