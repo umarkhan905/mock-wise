@@ -11,12 +11,9 @@ import { InterviewPacks } from "@/components/billing/InterviewPacks";
 
 export default function Billing() {
   const { user } = useAuthContext();
-  const planUsage = useQuery(
-    api.usage.getUserUsage,
-    user ? { userId: user._id } : "skip"
-  );
+  const subscription = useQuery(api.subscriptions.getUserSubscription);
 
-  if (planUsage === undefined) {
+  if (subscription === undefined || user === undefined) {
     // handle loading
     return <div>Loading...</div>;
   }
@@ -32,14 +29,14 @@ export default function Billing() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Current Plan Usage */}
-        <CurrentPlanUsage planUsage={planUsage} />
+        <CurrentPlanUsage subscription={subscription} credits={user.credits!} />
 
         {/* Usage Chart */}
         <UsageChart />
       </div>
 
       {/* Available Plans */}
-      <AvailablePlans currenPlan={planUsage?.plan || "free"} />
+      <AvailablePlans subscription={subscription} />
 
       {/* Interview Packs */}
       <InterviewPacks />
