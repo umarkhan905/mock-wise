@@ -1,20 +1,10 @@
 "use client";
 
-import { Roles } from "@/types/globals";
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { createContext, use, useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
-
-type User = {
-  _id: Id<"users">;
-  username: string;
-  clerkId: string;
-  email: string;
-  role: Roles;
-  image?: string;
-};
+import { User } from "@/types";
 
 interface AuthContextProps {
   user: User | undefined;
