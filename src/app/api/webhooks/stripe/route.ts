@@ -3,6 +3,8 @@ import { Id } from "../../../../../convex/_generated/dataModel";
 import { api } from "../../../../../convex/_generated/api";
 import { convex } from "@/lib/convex";
 import { ConvexError } from "convex/values";
+import { getSubscriptionPricingId } from "../../../../utils/subscriptions";
+import { stripe } from "@/lib/stripe";
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -31,6 +33,22 @@ export async function POST(request: Request) {
           event.data.object as Stripe.Checkout.Session
         );
         break;
+
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+        await handleUpsertSubscription(
+          event.data.object as Stripe.Subscription,
+          event.type
+        );
+        break;
+
+      case "customer.subscription.deleted":
+        await handleResetSubscription(event.data.object as Stripe.Subscription);
+        break;
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+        return new Response("Unhandled event type", { status: 400 });
     }
   } catch (error) {
     console.log("Error handling event-stripe: ", error);
@@ -63,9 +81,13 @@ const handleCheckoutSessionCompleted = async (
 
   await Promise.all([
     //   add the interview pack credits in user plan
-    convex.mutation(api.usage.updateUserInterviewCredits, {
+    convex.mutation(api.users.updateUserCredits, {
       userId: user._id,
-      interviewCredits,
+      credits: {
+        total: user.credits.total + interviewCredits,
+        remaining: user.credits.remaining + interviewCredits,
+        used: user.credits.used,
+      },
     }),
 
     //   add the purchase
@@ -81,4 +103,90 @@ const handleCheckoutSessionCompleted = async (
   ]);
 
   //   TODO: implement rate limiting and email notification
+};
+
+interface ExtendedSubscription extends Stripe.Subscription {
+  current_period_start: number;
+  current_period_end: number;
+}
+
+const handleUpsertSubscription = async (
+  subscription: Stripe.Subscription,
+  eventType: string
+) => {
+  const _subscription = subscription as ExtendedSubscription;
+
+  if (_subscription.status !== "active" || !_subscription.latest_invoice) {
+    console.log(
+      `Skipping subscription ${subscription.id} with status ${_subscription.status}`
+    );
+    return;
+  }
+
+  const stripeCustomerId = _subscription.customer as string;
+
+  try {
+    await convex.mutation(api.subscriptions.upsertSubscription, {
+      stripeSubscriptionId: _subscription.id,
+      status: _subscription.status,
+      plan:
+        (_subscription.items.data[0].price.metadata.plan as
+          | "free"
+          | "standard"
+          | "pro") || "pro",
+      currentPeriodStart: _subscription?.current_period_start,
+      currentPeriodEnd: _subscription?.current_period_end,
+      cancelAtPeriodEnd: _subscription.cancel_at_period_end,
+      stripeCustomerId,
+    });
+
+    console.log(
+      `Successfully processed ${eventType} event for subscription ${subscription.id}`
+    );
+
+    // TODO: SEND SUCCESS EMAIL
+  } catch (error) {
+    console.log(
+      `Error processing ${eventType} event for subscription ${subscription.id}:`,
+      error
+    );
+  }
+};
+
+const handleResetSubscription = async (subscription: Stripe.Subscription) => {
+  try {
+    const currentUserSubscription = await convex.query(
+      api.subscriptions.getUserSubscription
+    );
+
+    // if user has no next plan, return
+    if (!currentUserSubscription.nextPlan) return;
+
+    if (currentUserSubscription.nextPlan === "free") {
+      await convex.mutation(api.subscriptions.resetSubscription, {
+        stripeSubscriptionId: subscription.id,
+      });
+    } else {
+      const newPriceId = getSubscriptionPricingId(
+        currentUserSubscription.nextPlan
+      );
+
+      const newSub = (await stripe.subscriptions.create({
+        customer: subscription.customer as string,
+        items: [{ price: newPriceId }],
+      })) as Stripe.Subscription;
+
+      const _subscription = newSub as ExtendedSubscription;
+
+      await convex.mutation(api.subscriptions.addNextSubscription, {
+        plan: currentUserSubscription.nextPlan,
+        stripeSubscriptionId: _subscription.id,
+        currentPeriodStart: _subscription.current_period_start,
+        currentPeriodEnd: _subscription.current_period_end,
+        subscriptionId: currentUserSubscription._id,
+      });
+    }
+  } catch (error) {
+    console.log(`Error resetting subscription ${subscription.id}:`, error);
+  }
 };
