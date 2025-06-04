@@ -8,6 +8,7 @@ type CreatedByRole = "candidate" | "recruiter";
 type InterviewStatus = "pending" | "scheduled" | "created" | "expired";
 type Filters = "all" | "unread" | "read";
 type NotificationType = "all" | "interview" | "system" | "reminder";
+type Plan = "free" | "basic" | "standard" | "pro";
 
 interface AddDetails {
   title: string;
@@ -108,4 +109,46 @@ interface PlanUsage {
   questionsPerInterview: number;
   attemptsPerInterview: number;
   candidatesPerInterview: number;
+}
+
+interface Subscription {
+  _id: Id<"subscriptions">;
+  stripeSubscriptionId?: string | undefined;
+  cancelAtPeriodEnd?: boolean | undefined;
+  nextPlan?: "free" | "standard" | "pro" | undefined;
+  userId: Id<"users">;
+  status: "expired" | "active" | "canceled";
+  plan: "free" | "standard" | "pro";
+  currentPeriodStart: number;
+  currentPeriodEnd: number;
+}
+
+interface User {
+  _id: Id<"users">;
+  _creationTime: number;
+
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  stripeCustomerId: string;
+  image?: string;
+
+  role: Roles;
+  clerkId: string;
+
+  // Recruiter only fields
+  companyName?: string;
+
+  // Chat fields
+  isOnline?: boolean;
+  lastSeen?: number;
+
+  // Subscription fields
+  subscriptionId?: Id<"subscriptions">;
+  credits?: {
+    total: number;
+    remaining: number;
+    used: number;
+  };
 }

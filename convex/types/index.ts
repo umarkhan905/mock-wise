@@ -56,4 +56,21 @@ interface Notification {
   _creationTime: number;
 }
 
-export { type Interview, type InterviewType, type Notification };
+interface Subscription {
+  _id: Id<"subscriptions">;
+  stripeSubscriptionId?: string | undefined;
+  cancelAtPeriodEnd?: boolean | undefined;
+  nextPlan?: "free" | "standard" | "pro" | undefined;
+  userId: Id<"users">;
+  status: "expired" | "active" | "canceled";
+  plan: "free" | "standard" | "pro";
+  currentPeriodStart: number;
+  currentPeriodEnd: number;
+}
+
+export {
+  type Interview,
+  type InterviewType,
+  type Notification,
+  type Subscription,
+};
