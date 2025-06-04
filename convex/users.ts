@@ -14,6 +14,13 @@ const createUser = mutation({
       v.literal("recruiter")
     ),
     companyName: v.optional(v.string()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    credits: v.object({
+      total: v.number(),
+      remaining: v.number(),
+      used: v.number(),
+    }),
   },
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
@@ -24,16 +31,7 @@ const createUser = mutation({
     //   if user exists, return existing user
     if (existingUser) return existingUser._id;
 
-    const userId = await ctx.db.insert("users", {
-      username: args.username,
-      email: args.email,
-      image: args.image,
-      clerkId: args.clerkId,
-      stripeCustomerId: args.stripeCustomerId,
-      role: args.role,
-      companyName: args.companyName,
-    });
-
+    const userId = await ctx.db.insert("users", args);
     return userId;
   },
 });
@@ -253,6 +251,22 @@ const searchCandidatesForInterview = query({
   },
 });
 
+const updateUserCredits = mutation({
+  args: {
+    userId: v.id("users"),
+    credits: v.object({
+      total: v.number(),
+      remaining: v.number(),
+      used: v.number(),
+    }),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, {
+      credits: args.credits,
+    });
+  },
+});
+
 export {
   createUser,
   deleteUser,
@@ -264,4 +278,5 @@ export {
   searchUsers,
   setOnlineStatus,
   searchCandidatesForInterview,
+  updateUserCredits,
 };
