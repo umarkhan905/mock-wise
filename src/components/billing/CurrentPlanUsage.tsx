@@ -8,21 +8,22 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Calendar, Users, CheckCircle, Bot, List } from "lucide-react";
-import { PlanUsage } from "@/types";
+import { Subscription } from "@/types";
 import { PLAN_LIMITS } from "@/utils/plans-limits";
+import { format } from "date-fns";
 
 interface Props {
-  planUsage: PlanUsage | null;
+  subscription: Subscription;
+  credits: {
+    used: number;
+    remaining: number;
+    total: number;
+  };
 }
 
-export function CurrentPlanUsage({ planUsage }: Props) {
-  if (!planUsage) return null;
-
-  const plan = PLAN_LIMITS[planUsage.plan];
-  const usagePercentage = (planUsage.interviews.used / plan.interviews) * 100;
-
-  const date = new Date(planUsage.period);
-  date.setMonth(date.getMonth() + 1);
+export function CurrentPlanUsage({ subscription, credits }: Props) {
+  const plan = PLAN_LIMITS[subscription.plan];
+  const usagePercentage = (credits.used / credits.total) * 100;
 
   return (
     <Card>
@@ -31,7 +32,7 @@ export function CurrentPlanUsage({ planUsage }: Props) {
           <div>
             <CardTitle className="flex items-center space-x-2">
               <Crown className="h-5 w-5 text-yellow-500" />
-              <span className="capitalize">{planUsage.plan} Plan</span>
+              <span className="capitalize">{subscription.plan} Plan</span>
             </CardTitle>
             <CardDescription>${plan.pricing}/monthly • Active</CardDescription>
           </div>
@@ -53,12 +54,12 @@ export function CurrentPlanUsage({ planUsage }: Props) {
               <span>Interviews this month</span>
             </span>
             <span className="font-medium">
-              {planUsage.interviews.used} / {plan.interviews}
+              {credits.used} / {credits.total}
             </span>
           </div>
           <Progress value={usagePercentage} className="h-2" />
           <p className="text-xs text-muted-foreground">
-            {plan.interviews - planUsage.interviews.used} interviews remaining
+            {credits.remaining} interviews remaining
           </p>
         </div>
 
@@ -68,7 +69,7 @@ export function CurrentPlanUsage({ planUsage }: Props) {
               <Bot className="h-4 w-4" />
               <span>AI based questions per interview</span>
             </span>
-            <span className="font-medium">{planUsage.aiBasedQuestions}</span>
+            <span className="font-medium">{plan.aiBasedQuestions}</span>
           </div>
         </div>
 
@@ -78,9 +79,7 @@ export function CurrentPlanUsage({ planUsage }: Props) {
               <List className="h-4 w-4" />
               <span>Questions per interview</span>
             </span>
-            <span className="font-medium">
-              {planUsage.questionsPerInterview}
-            </span>
+            <span className="font-medium">{plan.questionsPerInterview}</span>
           </div>
         </div>
 
@@ -90,9 +89,7 @@ export function CurrentPlanUsage({ planUsage }: Props) {
               <Users className="h-4 w-4" />
               <span>Candidates per interview</span>
             </span>
-            <span className="font-medium">
-              {planUsage.candidatesPerInterview}
-            </span>
+            <span className="font-medium">{plan.candidatesPerInterview}</span>
           </div>
         </div>
 
@@ -100,12 +97,17 @@ export function CurrentPlanUsage({ planUsage }: Props) {
         <div className="pt-4 border-t">
           <div>
             <p className="text-sm font-medium">
-              {planUsage.plan === "free"
+              {subscription.plan === "free"
                 ? "Plan will renew on"
                 : "Next billing date"}
             </p>
             <p className="text-xs text-muted-foreground">
-              {date.toLocaleDateString()}
+              {subscription.plan === "free"
+                ? format(subscription.currentPeriodEnd, "MMM d, yyyy")
+                : format(
+                    new Date(subscription.currentPeriodEnd * 1000),
+                    "MMM d, yyyy"
+                  )}
             </p>
           </div>
         </div>
