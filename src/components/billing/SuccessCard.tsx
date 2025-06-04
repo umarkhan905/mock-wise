@@ -9,12 +9,15 @@ import {
 import { BadgeCheck } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import { Plan } from "@/types";
 
 interface Props {
-  pack: string;
   sessionId: string;
-  interviewCredits: string;
   redirectUrl: string;
+  pack?: string;
+  interviewCredits?: string;
+  type?: "pack" | "subscription";
+  plan?: Plan;
 }
 
 export function SuccessCard({
@@ -22,6 +25,7 @@ export function SuccessCard({
   sessionId,
   interviewCredits,
   redirectUrl,
+  type = "pack",
 }: Props) {
   return (
     <Card className="w-full max-w-md">
@@ -30,10 +34,16 @@ export function SuccessCard({
 
         <div className="text-center">
           <CardTitle className="text-lg">Payment Successful</CardTitle>
-          <CardDescription>
-            You’ve purchased the {pack}. {interviewCredits} interview credits
-            will be added to your account.
-          </CardDescription>
+          {type === "pack" ? (
+            <CardDescription>
+              You’ve purchased the {pack}. {interviewCredits} interview credits
+              will be added to your account.
+            </CardDescription>
+          ) : (
+            <CardDescription>
+              You have successfully subscribed to the {pack} plan.
+            </CardDescription>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -41,7 +51,11 @@ export function SuccessCard({
           <span className="font-medium">Transaction ID:</span> {sessionId}
         </div>
         <Button asChild className="w-full min-h-10 text-white">
-          <Link href={redirectUrl}>Browse more interview packs</Link>
+          <Link href={redirectUrl}>
+            {type === "subscription"
+              ? "Browse more plans"
+              : "Browse more interview packs"}
+          </Link>
         </Button>
       </CardContent>
     </Card>
