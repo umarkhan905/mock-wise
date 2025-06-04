@@ -26,6 +26,7 @@ import FormError from "@/components/error/FormError";
 import { Input } from "@/components/ui/input";
 import { AddCandidatesModal } from "../modals/AddCandidatesModal";
 import { UserCard } from "../modals/UserCard";
+import { PLAN_LIMITS } from "@/utils/subscriptions";
 
 export default function Schedule() {
   const [interviewId, setInterviewId] = useState<Id<"interviews">>();
@@ -53,14 +54,7 @@ export default function Schedule() {
   const removeCandidate = useMutation(
     api.participants.removeCandidateFromInterview
   );
-  const planUsage = useQuery(
-    api.usage.getUserUsage,
-    interview
-      ? {
-          userId: interview.createdById,
-        }
-      : "skip"
-  );
+  const subscription = useQuery(api.subscriptions.getUserSubscription);
 
   const { nextStep, prevStep } = useStep(jobInterviewSteps);
 
@@ -189,10 +183,12 @@ export default function Schedule() {
   }, [interview]);
 
   useEffect(() => {
-    if (planUsage) {
-      setMaxCandidates(planUsage.candidatesPerInterview);
+    if (subscription) {
+      const candidatesLimit =
+        PLAN_LIMITS[subscription.plan].candidatesPerInterview;
+      setMaxCandidates(candidatesLimit);
     }
-  }, [planUsage]);
+  }, [subscription]);
 
   if (scheduledCandidates === undefined) {
     // Handle loading state

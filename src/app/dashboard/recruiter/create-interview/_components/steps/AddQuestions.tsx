@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Assessment } from "@/types";
 import { Badge } from "@/components/ui/badge";
+import { PLAN_LIMITS } from "@/utils/subscriptions";
 
 interface Props {
   assessment: Assessment;
@@ -70,14 +71,7 @@ export default function AddQuestions({ assessment }: Props) {
     api.interviews.getInterviewById,
     interviewId ? { interviewId } : "skip"
   );
-  const planUsage = useQuery(
-    api.usage.getUserUsage,
-    interview
-      ? {
-          userId: interview.createdById,
-        }
-      : "skip"
-  );
+  const subscription = useQuery(api.subscriptions.getUserSubscription);
 
   // ai based questions limit
   const aiBasedQuestionsLimit = getAIBasedQuestionsLimit(
@@ -206,11 +200,12 @@ export default function AddQuestions({ assessment }: Props) {
 
   // plan usage
   useEffect(() => {
-    if (planUsage) {
-      setMaxQuestions(planUsage.questionsPerInterview || 0);
-      setAiBasedQuestions(planUsage.aiBasedQuestions || 0);
+    if (subscription) {
+      const plan = PLAN_LIMITS[subscription.plan] || PLAN_LIMITS.free;
+      setMaxQuestions(plan.questionsPerInterview || 0);
+      setAiBasedQuestions(plan.aiBasedQuestions || 0);
     }
-  }, [planUsage]);
+  }, [subscription]);
 
   return (
     <Card>

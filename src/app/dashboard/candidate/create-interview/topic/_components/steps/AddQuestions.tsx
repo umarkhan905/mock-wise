@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ConvexError } from "convex/values";
 import { Question } from "@/types";
+import { PLAN_LIMITS } from "@/utils/subscriptions";
 
 interface IQuestion extends Question {
   id: number;
@@ -45,14 +46,7 @@ export function AddTopicQuestions() {
     api.interviews.getInterviewById,
     interviewId ? { interviewId } : "skip"
   );
-  const planUsage = useQuery(
-    api.usage.getUserUsage,
-    interview
-      ? {
-          userId: interview.createdById,
-        }
-      : "skip"
-  );
+  const subscription = useQuery(api.subscriptions.getUserSubscription);
 
   const handleAddQuestions = async () => {
     setLoading(true);
@@ -105,10 +99,11 @@ export function AddTopicQuestions() {
   }, [interview]);
 
   useEffect(() => {
-    if (planUsage) {
-      setAiBasedQuestions(planUsage.aiBasedQuestions);
+    if (subscription) {
+      const questionsLimit = PLAN_LIMITS[subscription.plan].aiBasedQuestions;
+      setAiBasedQuestions(questionsLimit);
     }
-  }, [planUsage]);
+  }, [subscription]);
 
   const isLimitReached = questions.length >= aiBasedQuestions;
   const isButtonDisabled =
