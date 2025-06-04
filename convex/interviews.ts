@@ -35,12 +35,7 @@ const createJobInterview = mutation({
     }
 
     // check either user has interview credits or not
-    const canCreateInterviews = await ctx.runQuery(
-      api.planLimits.canCreateInterviews,
-      {
-        userId: args.createdById,
-      }
-    );
+    const canCreateInterviews = user.credits.remaining > 0;
 
     // if user has no interview credits
     if (!canCreateInterviews) {
@@ -68,8 +63,12 @@ const createJobInterview = mutation({
     });
 
     // decrement user interview credits
-    await ctx.runMutation(api.usage.decrementInterviews, {
-      userId: args.createdById,
+    await ctx.db.patch(user._id, {
+      credits: {
+        total: user.credits.total,
+        remaining: user.credits.remaining - 1,
+        used: user.credits.used + 1,
+      },
     });
 
     return interviewId;
@@ -299,12 +298,7 @@ const createTopicInterview = mutation({
     }
 
     // check either user has interview credits or not
-    const canCreateInterviews = await ctx.runQuery(
-      api.planLimits.canCreateInterviews,
-      {
-        userId: args.createdById,
-      }
-    );
+    const canCreateInterviews = user.credits.remaining > 0;
 
     // if user has no interview credits
     if (!canCreateInterviews) {
@@ -331,8 +325,12 @@ const createTopicInterview = mutation({
     });
 
     // decrement user interview credits
-    await ctx.runMutation(api.usage.decrementInterviews, {
-      userId: args.createdById,
+    await ctx.db.patch(user._id, {
+      credits: {
+        total: user.credits.total,
+        remaining: user.credits.remaining - 1,
+        used: user.credits.used + 1,
+      },
     });
 
     return interviewId;
