@@ -17,32 +17,19 @@ export default defineSchema({
     ),
     clerkId: v.string(),
 
-    // common fields - social media
-    bio: v.optional(v.string()),
-    location: v.optional(v.string()),
-    website: v.optional(v.string()),
-    github: v.optional(v.string()),
-    linkedin: v.optional(v.string()),
-    twitter: v.optional(v.string()),
-
-    // admin only fields
-    password: v.optional(v.string()),
-
-    // candidate only fields
-    resume: v.optional(v.string()),
-    coverLetter: v.optional(v.string()),
-
     // recruiter only fields
     companyName: v.optional(v.string()),
-    companyLogo: v.optional(v.string()),
-    companyDescription: v.optional(v.string()),
 
     // chat fields
     isOnline: v.optional(v.boolean()),
     lastSeen: v.optional(v.number()),
 
     // subscription fields
-    subscriptionId: v.optional(v.id("subscriptions")),
+    credits: v.object({
+      total: v.number(),
+      remaining: v.number(),
+      used: v.number(),
+    }),
   })
     .index("by_username", ["username"])
     .index("by_clerk_id", ["clerkId"])
@@ -214,21 +201,14 @@ export default defineSchema({
     ),
     stripeSubscriptionId: v.optional(v.string()),
     cancelAtPeriodEnd: v.optional(v.boolean()),
-  }).index("by_stripe_subscription_id", ["stripeSubscriptionId"]),
 
-  planUsage: defineTable({
-    userId: v.id("users"),
-    plan: v.union(v.literal("free"), v.literal("standard"), v.literal("pro")),
-    period: v.number(),
-    interviews: v.object({
-      total: v.number(),
-      used: v.number(),
-    }),
-    aiBasedQuestions: v.number(),
-    questionsPerInterview: v.number(),
-    attemptsPerInterview: v.number(),
-    candidatesPerInterview: v.number(),
-  }).index("by_user_id", ["userId"]),
+    // fields for downgrade plan
+    nextPlan: v.optional(
+      v.union(v.literal("free"), v.literal("standard"), v.literal("pro"))
+    ),
+  })
+    .index("by_stripe_subscription_id", ["stripeSubscriptionId"])
+    .index("by_user_id", ["userId"]),
 
   purchases: defineTable({
     userId: v.id("users"),
