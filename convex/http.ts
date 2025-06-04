@@ -4,7 +4,7 @@ import { WebhookEvent } from "@clerk/nextjs/server";
 import { Webhook } from "svix";
 import { stripe } from "../src/lib/stripe";
 import { api } from "./_generated/api";
-import { PLAN_LIMITS } from "../src/utils/plans-limits";
+import { PLAN_LIMITS } from "../src/utils/subscriptions";
 
 type Role = "admin" | "candidate" | "recruiter";
 type Metadata = {
@@ -54,8 +54,15 @@ const clerkWebhook = httpAction(async (ctx, request) => {
   try {
     switch (evt.type) {
       case "user.created":
-        const { id, email_addresses, username, image_url, unsafe_metadata } =
-          evt.data;
+        const {
+          id,
+          email_addresses,
+          username,
+          image_url,
+          unsafe_metadata,
+          first_name,
+          last_name,
+        } = evt.data;
         const metadata = unsafe_metadata as Metadata;
         const email = email_addresses[0]?.email_address;
 
@@ -66,6 +73,7 @@ const clerkWebhook = httpAction(async (ctx, request) => {
           metadata: { clerkId: id, username: username as string },
         });
 
+        const credits = PLAN_LIMITS["free"].interviews;
         // create convex user
         const userId = await ctx.runMutation(api.users.createUser, {
           email,
@@ -75,6 +83,13 @@ const clerkWebhook = httpAction(async (ctx, request) => {
           image: image_url,
           role: metadata.role || "candidate",
           companyName: metadata.companyName || undefined,
+          firstName: first_name ? first_name : undefined,
+          lastName: last_name ? last_name : undefined,
+          credits: {
+            total: credits,
+            remaining: credits,
+            used: 0,
+          },
         });
 
         if (!userId) {
@@ -83,18 +98,9 @@ const clerkWebhook = httpAction(async (ctx, request) => {
           });
         }
 
-        const plan = PLAN_LIMITS["free"];
-
-        // create new plan usage
-        await ctx.runMutation(api.usage.createPlanUsage, {
+        // create new free subscription for user
+        await ctx.runMutation(api.subscriptions.createFreeSubscription, {
           userId,
-          plan: "free",
-          interviews: { total: plan.interviews, used: 0 },
-          aiBasedQuestions: plan.aiBasedQuestions,
-          questionsPerInterview: plan.questionsPerInterview,
-          attemptsPerInterview: plan.attemptsPerInterview,
-          candidatesPerInterview: plan.candidatesPerInterview,
-          period: Date.now(),
         });
 
         // TODO: add scheduler to create new plan usage after 30 days
