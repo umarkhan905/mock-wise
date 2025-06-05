@@ -135,9 +135,6 @@ export default function AddQuestions({ assessment }: Props) {
       const duration = questions.reduce((acc, q) => acc + q.timeLimit, 0);
       const numberOfQuestions = questions.length;
 
-      // 1 day
-      const validateTill = Date.now() + 24 * 60 * 60 * 1000;
-
       await updateInterviewQuestions({
         questions: questions.map((q) => ({
           question: q.question,
@@ -148,7 +145,6 @@ export default function AddQuestions({ assessment }: Props) {
         interviewId: interviewId!,
         duration,
         numberOfQuestions,
-        validateTill,
       });
       setQuestions([]);
       nextStep();
