@@ -23,8 +23,14 @@ import { ArrowLeft, Check, Clock, Copy, List, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { ConvexError } from "convex/values";
 import FormError from "@/components/error/FormError";
+import { Assessment } from "@/types";
+import { toast } from "sonner";
 
-export default function PreviewLink() {
+interface Props {
+  assessment: Assessment;
+}
+
+export default function PreviewLink({ assessment }: Props) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<null | string>(null);
   const [interviewId, setInterviewId] = useState<Id<"interviews">>();
@@ -59,8 +65,10 @@ export default function PreviewLink() {
       });
 
       if (notificationId) {
-        // TODO: Add toast for created interview
-        removeLocalStorage("interviewId");
+        toast.success("Interview is ready");
+        removeLocalStorage(
+          assessment === "voice" ? "voiceInterviewId" : "mcqInterviewId"
+        );
         router.push("/dashboard/recruiter/interviews");
       }
     } catch (error) {
@@ -73,7 +81,9 @@ export default function PreviewLink() {
   };
 
   useEffect(() => {
-    const interviewId = getLocalStorage("interviewId");
+    const interviewId = getLocalStorage(
+      assessment === "voice" ? "voiceInterviewId" : "mcqInterviewId"
+    );
     if (interviewId) setInterviewId(interviewId as Id<"interviews">);
   }, []);
 
