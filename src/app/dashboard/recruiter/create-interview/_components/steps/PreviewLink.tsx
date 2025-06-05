@@ -48,6 +48,7 @@ export default function PreviewLink({ assessment }: Props) {
     interviewId ? { interviewId } : "skip"
   );
   const createNotification = useMutation(api.notifications.createNotification);
+  const addValidateTill = useMutation(api.interviews.addValidateTill);
 
   // router
   const router = useRouter();
@@ -56,13 +57,18 @@ export default function PreviewLink({ assessment }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const notificationId = await createNotification({
-        userId: interview?.createdById as Id<"users">,
-        title: "Interview is ready",
-        message: "You can start the interview process now",
-        read: false,
-        type: "interview",
-      });
+      const result = await Promise.all([
+        createNotification({
+          userId: interview?.createdById as Id<"users">,
+          title: "Interview is ready",
+          message: "You can start the interview process now",
+          read: false,
+          type: "interview",
+        }),
+        addValidateTill({ interviewId: interviewId as Id<"interviews"> }),
+      ]);
+
+      const notificationId = result[0];
 
       if (notificationId) {
         toast.success("Interview is ready");
