@@ -176,7 +176,9 @@ export default function AddQuestions({ assessment }: Props) {
     (assessment === "voice" && questions.some((q) => !q.question?.trim()));
 
   useEffect(() => {
-    const interviewId = getLocalStorage("interviewId");
+    const interviewId = getLocalStorage(
+      assessment === "voice" ? "voiceInterviewId" : "mcqInterviewId"
+    );
     if (interviewId) setInterviewId(interviewId as Id<"interviews">);
   }, []);
 
@@ -227,6 +229,10 @@ export default function AddQuestions({ assessment }: Props) {
             setQuestions={setQuestions}
           />
         </div>
+
+        <Badge className="mt-4 text-white px-4 py-1 rounded-full">
+          {questions.length} / {maxQuestions}
+        </Badge>
       </CardHeader>
 
       <CardContent>
