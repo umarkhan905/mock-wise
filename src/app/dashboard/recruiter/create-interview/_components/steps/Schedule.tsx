@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,10 +26,15 @@ import { Input } from "@/components/ui/input";
 import { AddCandidatesModal } from "../modals/AddCandidatesModal";
 import { UserCard } from "../modals/UserCard";
 import { PLAN_LIMITS } from "@/utils/subscriptions";
+import { Assessment } from "@/types";
+import { Badge } from "@/components/ui/badge";
 
-export default function Schedule() {
+interface Props {
+  assessment: Assessment;
+}
+
+export default function Schedule({ assessment }: Props) {
   const [interviewId, setInterviewId] = useState<Id<"interviews">>();
-  const [isReminderChecked, setIsReminderChecked] = useState<boolean>(true);
   const [dateTime, setDateTime] = useState<string>("");
   const [loading, setLoading] = useState<"schedule" | "unSchedule" | null>(
     null
@@ -39,7 +43,6 @@ export default function Schedule() {
   const [maxCandidates, setMaxCandidates] = useState<number>(0);
 
   const scheduleInterview = useMutation(api.interviews.scheduleInterview);
-  const unScheduleInterview = useMutation(api.interviews.unScheduleInterview);
   const interview = useQuery(
     api.interviews.getInterviewById,
     interviewId ? { interviewId } : "skip"
@@ -50,9 +53,6 @@ export default function Schedule() {
   );
   const scheduleCandidate = useMutation(
     api.participants.updateCandidateScheduledAt
-  );
-  const removeCandidate = useMutation(
-    api.participants.removeCandidateFromInterview
   );
   const subscription = useQuery(api.subscriptions.getUserSubscription);
 
@@ -100,40 +100,6 @@ export default function Schedule() {
     }
   };
 
-  const handleUnScheduleInterview = async () => {
-    if (!interview?.jobId) return;
-
-    setLoading("unSchedule");
-    setError(null);
-    try {
-      await unScheduleInterview({
-        interviewId: interviewId!,
-        jobId: interview.jobId,
-        validateTill: Date.now() + 24 * 60 * 60 * 1000, // 24 hours later after un-scheduling
-      });
-
-      // unschedule candidates
-      if (scheduledCandidates && scheduledCandidates.length > 0) {
-        await Promise.all(
-          scheduledCandidates.map(async (candidate) => {
-            await removeCandidate({
-              interviewId: interviewId!,
-              userId: candidate.userId,
-            });
-          })
-        );
-      }
-
-      setDateTime("");
-    } catch (error) {
-      console.log("Error while un-scheduling interview", error);
-      const convexError = error as ConvexError<string>;
-      setError(convexError.message);
-    } finally {
-      setLoading(null);
-    }
-  };
-
   const handleRescheduleInterview = async () => {
     setLoading("schedule");
     setError(null);
@@ -171,7 +137,9 @@ export default function Schedule() {
   };
 
   useEffect(() => {
-    const interviewId = getLocalStorage("interviewId");
+    const interviewId = getLocalStorage(
+      assessment === "voice" ? "voiceInterviewId" : "mcqInterviewId"
+    );
     if (interviewId) setInterviewId(interviewId as Id<"interviews">);
   }, []);
 
@@ -195,15 +163,18 @@ export default function Schedule() {
     return <div>Loading...</div>;
   }
 
+  const isNextDisabled =
+    loading === "schedule" ||
+    loading === "unSchedule" ||
+    !dateTime ||
+    !scheduledCandidates.length;
+
   return (
     <Card>
       <CardHeader>
         <section className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-xl">
-              Schedule Interview{" "}
-              <span className="text-muted-foreground text-xs">(optional)</span>
-            </CardTitle>
+            <CardTitle className="text-xl">Schedule Interview</CardTitle>
             <CardDescription>
               Select the date to schedule the interview
             </CardDescription>
@@ -212,70 +183,57 @@ export default function Schedule() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="space-y-2 w-full">
-          <Label htmlFor="time">Schedule Interview At</Label>
-          <Input
-            type="datetime-local"
-            value={dateTime}
-            onChange={(e) => setDateTime(e.target.value)}
-            className="min-h-10 w-full"
-          />
-        </div>
-
-        <div className="flex justify-end gap-2">
-          {dateTime && interview?.isScheduled && (
-            <Button
-              variant={"destructive"}
-              disabled={loading === "unSchedule"}
-              onClick={handleUnScheduleInterview}
-              className="min-h-10 min-w-46"
-            >
-              {loading === "unSchedule" ? (
-                <Loader2 className="size-5 animate-spin" />
-              ) : (
-                "Unschedule Interview"
-              )}
-            </Button>
-          )}
-
-          {dateTime && (
-            <Button
-              className="min-h-10 text-white min-w-46"
-              disabled={loading === "schedule"}
-              onClick={
-                interview?.isScheduled
-                  ? handleRescheduleInterview
-                  : handleScheduleInterview
-              }
-            >
-              {loading === "schedule" ? (
-                <Loader2 className="size-5 animate-spin" />
-              ) : interview?.isScheduled ? (
-                "Reschedule Interview"
-              ) : (
-                "Schedule Interview"
-              )}
-            </Button>
-          )}
-        </div>
-
-        {scheduledCandidates.length === 0 && interview?.isScheduled && (
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="schedule-for-candidates"
-              checked={isReminderChecked}
-              onCheckedChange={(checked) => setIsReminderChecked(checked)}
+        <div className="space-y-3">
+          <div className="space-y-2 w-full">
+            <Label htmlFor="time">Schedule Interview At</Label>
+            <Input
+              type="datetime-local"
+              value={dateTime}
+              onChange={(e) => setDateTime(e.target.value)}
+              className="min-h-10 w-full"
             />
-            <Label htmlFor="schedule-for-candidates">
-              Add reminder for candidates
-            </Label>
           </div>
-        )}
 
-        {scheduledCandidates.length > 0 && (
-          <div className="space-y-2">
-            <h2 className="text-lg font-medium">Scheduled Candidates</h2>
-            {scheduledCandidates.map((c) => (
+          <div className="flex justify-end">
+            {dateTime && (
+              <Button
+                className="min-h-10 text-white min-w-46"
+                disabled={loading === "schedule"}
+                onClick={
+                  interview?.isScheduled
+                    ? handleRescheduleInterview
+                    : handleScheduleInterview
+                }
+              >
+                {loading === "schedule" ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : interview?.isScheduled ? (
+                  "Reschedule Interview"
+                ) : (
+                  "Schedule Interview"
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {interview && interview.isScheduled && (
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h2 className="font-medium">
+                {scheduledCandidates.length > 0
+                  ? "Scheduled Candidates"
+                  : "Add Candidates to Interview"}
+              </h2>
+
+              <Badge className="py-1 px-4 rounded-full text-white">
+                {scheduledCandidates.length} / {maxCandidates}
+              </Badge>
+            </div>
+          )}
+
+          {scheduledCandidates.length > 0 &&
+            scheduledCandidates.map((c) => (
               <UserCard
                 key={c._id}
                 user={{
@@ -289,11 +247,9 @@ export default function Schedule() {
                 buttonType="remove"
               />
             ))}
-          </div>
-        )}
+        </div>
 
-        {isReminderChecked &&
-          interviewId &&
+        {interviewId &&
           scheduledCandidates.length < maxCandidates &&
           interview?.isScheduled && (
             <AddCandidatesModal
@@ -311,7 +267,11 @@ export default function Schedule() {
           <span>Back</span>
         </Button>
 
-        <Button onClick={nextStep} className="text-white min-h-10 min-w-22">
+        <Button
+          onClick={nextStep}
+          disabled={isNextDisabled}
+          className="text-white min-h-10 min-w-22"
+        >
           <span>Next</span>
           <ArrowRight className="size-5" />
         </Button>
