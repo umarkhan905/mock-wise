@@ -10,6 +10,7 @@ import GenerateKeywords from "../buttons/GenerateKeywords";
 import { KeywordsModal } from "../modals/KeywordsModal";
 import FormError from "@/components/error/FormError";
 import GenerateDescription from "../buttons/GenerateDescription";
+import { AddDetails } from "@/types";
 
 interface Props {
   loading: boolean;
@@ -55,9 +56,10 @@ export function AddDetailsForm({
     return setFormData((prev) => ({ ...prev, [id]: [...prev[id], value] }));
   };
 
-  const isButtonDisabled = Object.values(formData).some(
-    (value) => value === "" || value.length === 0
-  );
+  const isButtonDisabled =
+    Object.values(formData).some(
+      (value) => value === "" || value.length === 0
+    ) || loading;
   return (
     <>
       <form onSubmit={onSubmit} className="space-y-6">
