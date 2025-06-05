@@ -9,6 +9,7 @@ import Link from "next/link";
 import { instructions } from "@/constants";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
+import { InterviewResultMessage } from "../../_components/InterviewResultMessage";
 
 export default async function Interview({
   params,
@@ -34,10 +35,26 @@ export default async function Interview({
       return notFound();
 
     case "expired":
-      return redirect(`/interview/${interviewId}/expired`);
+      return <InterviewResultMessage status="expired" />;
 
     case "alreadyAttempted":
-      return redirect(`/interview/${interviewId}/attempted`);
+      return <InterviewResultMessage status="alreadyAttempted" />;
+
+    case "scheduled":
+      const scheduledDate = result?.interview?.scheduledAt;
+
+      return (
+        <InterviewResultMessage
+          status="scheduled"
+          scheduledDate={new Date(scheduledDate!).toString()}
+        />
+      );
+
+    case "notInterviewCandidate":
+      return <InterviewResultMessage status="notInterviewCandidate" />;
+
+    case "attemptReached":
+      return <InterviewResultMessage status="attemptReached" />;
   }
 
   const { interview, participantId } = result;
