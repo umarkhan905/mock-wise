@@ -153,7 +153,6 @@ const updateQuestions = mutation({
 
     const interviewId = await ctx.db.patch(args.interviewId, {
       questions: args.questions,
-      status: "created",
       numberOfQuestions: args.numberOfQuestions,
       duration: args.duration,
       validateTill: args.validateTill,
@@ -405,6 +404,27 @@ const updateFinish = mutation({
   },
 });
 
+const addValidateTill = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+  },
+  handler: async (ctx, args) => {
+    const interview = await ctx.db.get(args.interviewId);
+    if (!interview) {
+      throw new ConvexError("Interview not found.");
+    }
+
+    const validateTill = new Date(interview.scheduledAt!);
+
+    // add 2 days
+    validateTill.setDate(validateTill.getDate() + 2);
+
+    return await ctx.db.patch(args.interviewId, {
+      validateTill: validateTill.getTime(),
+    });
+  },
+});
+
 export {
   createJobInterview,
   getInterviewById,
@@ -416,4 +436,5 @@ export {
   createTopicInterview,
   updateTopicInterview,
   updateFinish,
+  addValidateTill,
 };
