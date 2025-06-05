@@ -3,6 +3,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../../../../convex/_generated/api";
 import { UserCard } from "./UserCard";
 import { Id } from "../../../../../../../convex/_generated/dataModel";
+import { UserCardSkeleton } from "@/components/chats/skeletons/UserCardSkeleton";
 
 interface Props {
   searchTerm: string;
@@ -21,7 +22,13 @@ export function SearchCandidates({
 
   if (searchUsers === undefined) {
     // Handle loading state
-    return <div>Loading...</div>;
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <UserCardSkeleton key={index} />
+        ))}
+      </div>
+    );
   }
 
   return (

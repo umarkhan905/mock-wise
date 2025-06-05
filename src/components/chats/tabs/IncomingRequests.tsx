@@ -7,6 +7,7 @@ import { Roles } from "@/types/globals";
 import { UserPlus } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { UserCardSkeleton } from "../skeletons/UserCardSkeleton";
 
 interface Props {
   userId: Id<"users">;
@@ -21,7 +22,13 @@ export function IncomingRequests({ userId, isLoaded }: Props) {
 
   if (!isLoaded || incomingRequests === undefined) {
     // Handle loading state
-    return <div>Loading...</div>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {Array.from({ length: 9 }).map((_, index) => (
+          <UserCardSkeleton key={index} />
+        ))}
+      </div>
+    );
   }
 
   // TODO: Show only users that are not already in a chat and not request being sent

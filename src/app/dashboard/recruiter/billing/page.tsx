@@ -8,6 +8,7 @@ import { CurrentPlanUsage } from "@/components/billing/CurrentPlanUsage";
 import { UsageChart } from "@/components/billing/UsageChart";
 import { AvailablePlans } from "@/components/billing/AvailablePlans";
 import { InterviewPacks } from "@/components/billing/InterviewPacks";
+import { BillingPageLoader } from "@/components/billing/BillingPageLoader";
 
 export default function Billing() {
   const { user } = useAuthContext();
@@ -15,7 +16,7 @@ export default function Billing() {
 
   if (subscription === undefined || user === undefined) {
     // handle loading
-    return <div>Loading...</div>;
+    return <BillingPageLoader />;
   }
 
   return (
@@ -26,7 +27,6 @@ export default function Billing() {
           Manage your subscription plan
         </p>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Current Plan Usage */}
         <CurrentPlanUsage subscription={subscription} credits={user.credits!} />
@@ -34,10 +34,8 @@ export default function Billing() {
         {/* Usage Chart */}
         <UsageChart />
       </div>
-
       {/* Available Plans */}
       <AvailablePlans subscription={subscription} />
-
       {/* Interview Packs */}
       <InterviewPacks />
     </div>

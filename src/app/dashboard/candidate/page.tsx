@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuthContext } from "@/context/AuthStore";
+import { DashboardSkeleton } from "./_components/skeletons/DashboardSkeleton";
 
 export default function Dashboard() {
   const { user } = useAuthContext();
@@ -39,14 +40,12 @@ export default function Dashboard() {
       : "skip"
   );
 
-  console.log("upcomingInterviews", upcomingInterviews);
-
   // redirect to login if user is not signed in
   if (stats instanceof ConvexError && stats.message.includes("unauthorized"))
     return router.push("/");
 
   if (stats === undefined || upcomingInterviews === undefined)
-    return <div>Loading...</div>;
+    return <DashboardSkeleton />;
 
   const recentInterviews = stats?.recent || [];
 

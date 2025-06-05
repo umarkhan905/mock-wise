@@ -16,7 +16,6 @@ import React from "react";
 
 interface User {
   companyName: string | undefined;
-  companyLogo: string | undefined;
 }
 
 interface Props {
@@ -62,7 +61,7 @@ export function InterviewCard({ interview, user }: Props) {
       <CardHeader className="px-3">
         <div className="flex items-center gap-3">
           <Avatar className="size-12">
-            <AvatarImage src={user.companyLogo} />
+            <AvatarImage src={"/logo.png"} />
             <AvatarFallback className="bg-primary/10 text-primary text-xl">
               {user.companyName?.charAt(0) || "M"}
             </AvatarFallback>

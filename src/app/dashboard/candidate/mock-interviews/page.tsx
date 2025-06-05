@@ -7,10 +7,11 @@ import React, { useState } from "react";
 import { CandidateFilters } from "@/types";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { useAuth } from "@clerk/nextjs";
 import { defaultCandidateFilters } from "@/constants";
 import { InterviewFilters } from "./_components/InterviewFilters";
 import { InterviewCard } from "./_components/InterviewCard";
+import { useAuthContext } from "@/context/AuthStore";
+import { InterviewLoader } from "@/components/dashboard/interviews/InterviewLoader";
 
 export default function Interviews() {
   const [search, setSearch] = useState<string>("");
@@ -19,12 +20,7 @@ export default function Interviews() {
   );
 
   // query
-  const { userId, isLoaded } = useAuth();
-
-  const user = useQuery(
-    api.users.getUserByClerkId,
-    userId ? { clerkId: userId } : "skip"
-  );
+  const { user } = useAuthContext();
 
   const interviews = useQuery(
     api.candidates.getCandidateMockInterviews,
@@ -47,11 +43,6 @@ export default function Interviews() {
       return interview.title.toLowerCase().includes(search.toLowerCase());
     });
 
-  if (!isLoaded) {
-    // Handle loading state
-    return <div>Loading...</div>;
-  }
-
   return (
     <section className="space-y-6">
       <div className="flex items-center justify-between">
@@ -72,7 +63,7 @@ export default function Interviews() {
       />
 
       <div className="space-y-4">
-        {interviews === undefined && <p>Loading...</p>}
+        {interviews === undefined && <InterviewLoader />}
         {filteredInterviews && filteredInterviews.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredInterviews.map((interview) => (
@@ -80,7 +71,6 @@ export default function Interviews() {
                 key={interview._id}
                 interview={interview}
                 user={{
-                  companyLogo: user?.companyLogo,
                   companyName: user?.companyName,
                 }}
               />

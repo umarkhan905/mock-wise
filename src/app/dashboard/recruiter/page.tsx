@@ -16,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DashboardSkeleton } from "./_components/skeletons/DashboardSkeleton";
 
 export default function Dashboard() {
   const stats = useQuery(api.recruiter.getRecruiterStats);
@@ -25,10 +26,10 @@ export default function Dashboard() {
   if (stats instanceof ConvexError && stats.message.includes("unauthorized"))
     return router.push("/");
 
-  if (stats === undefined) return <div>Loading...</div>;
+  if (stats === undefined) return <DashboardSkeleton />;
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Welcome, {stats.user.username}</h1>

@@ -5,6 +5,7 @@ import { UserCard } from "../user/UserCard";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { UserCardSkeleton } from "../skeletons/UserCardSkeleton";
 
 interface Props {
   userId: Id<"users">;
@@ -19,7 +20,13 @@ export function BrowseUsers({ userId, isLoaded }: Props) {
 
   if (!isLoaded || users === undefined) {
     // Handle loading state
-    return <div>Loading...</div>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {Array.from({ length: 9 }).map((_, index) => (
+          <UserCardSkeleton key={index} />
+        ))}
+      </div>
+    );
   }
 
   return (

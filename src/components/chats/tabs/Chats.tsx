@@ -10,6 +10,7 @@ import { ChatModal } from "../modals/chat/ChatModal";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { api } from "../../../../convex/_generated/api";
 import { formatTime } from "@/utils/format-date-and-time";
+import { ChatSkeleton } from "../skeletons/ChatSkeleton";
 
 interface Props {
   userId: Id<"users">;
@@ -34,7 +35,13 @@ export function Chats({ userId, isLoaded }: Props) {
 
   if (!isLoaded || chats === undefined) {
     // Handle loading state
-    return <div>Loading...</div>;
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <ChatSkeleton key={index} />
+        ))}
+      </div>
+    );
   }
 
   const filteredChats = chats.filter((chat) =>

@@ -8,6 +8,7 @@ import { UsageChart } from "@/components/billing/UsageChart";
 import { AvailablePlans } from "@/components/billing/AvailablePlans";
 import { InterviewPacks } from "@/components/billing/InterviewPacks";
 import { useAuthContext } from "@/context/AuthStore";
+import { BillingPageLoader } from "@/components/billing/BillingPageLoader";
 
 export default function Billing() {
   const { user } = useAuthContext();
@@ -16,7 +17,7 @@ export default function Billing() {
 
   if (subscription === undefined || user === undefined) {
     // handle loading
-    return <div>Loading...</div>;
+    return <BillingPageLoader />;
   }
 
   return (

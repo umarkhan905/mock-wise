@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import React, { useState } from "react";
 import { api } from "../../../../../convex/_generated/api";
@@ -11,6 +10,8 @@ import { RecruiterFilters } from "@/types";
 import { defaultRecruiterFilters } from "@/constants";
 import { InterviewCard } from "./_components/InterviewCard";
 import InterviewFilters from "./_components/InterviewFilters";
+import { useAuthContext } from "@/context/AuthStore";
+import { InterviewLoader } from "@/components/dashboard/interviews/InterviewLoader";
 
 export default function JobInterviews() {
   const [search, setSearch] = useState<string>("");
@@ -18,11 +19,8 @@ export default function JobInterviews() {
     defaultRecruiterFilters
   );
 
-  const { userId: clerkUserId, isLoaded } = useAuth();
-  const user = useQuery(
-    api.users.getUserByClerkId,
-    clerkUserId ? { clerkId: clerkUserId } : "skip"
-  );
+  const { user } = useAuthContext();
+
   const interviews = useQuery(
     api.candidates.getCandidateJobInterviews,
     user
@@ -46,11 +44,6 @@ export default function JobInterviews() {
       return interview.title.toLowerCase().includes(search.toLowerCase());
     });
 
-  if (!isLoaded) {
-    // Handle loading state
-    return <div>Loading...</div>;
-  }
-
   return (
     <section className="space-y-6">
       <div className="flex items-center justify-between">
@@ -71,7 +64,7 @@ export default function JobInterviews() {
       />
 
       <div className="space-y-4">
-        {interviews === undefined && <p>Loading...</p>}
+        {interviews === undefined && <InterviewLoader />}
         {filteredInterviews && filteredInterviews.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredInterviews.map((interview) => (
@@ -79,7 +72,6 @@ export default function JobInterviews() {
                 key={interview._id}
                 interview={interview}
                 user={{
-                  companyLogo: user?.companyLogo,
                   companyName: user?.companyName,
                 }}
               />

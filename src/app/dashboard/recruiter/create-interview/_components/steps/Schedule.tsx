@@ -28,6 +28,7 @@ import { UserCard } from "../modals/UserCard";
 import { PLAN_LIMITS } from "@/utils/subscriptions";
 import { Assessment } from "@/types";
 import { Badge } from "@/components/ui/badge";
+import { ScheduleLoader } from "../skeletons/ScheduleLoader";
 
 interface Props {
   assessment: Assessment;
@@ -160,7 +161,7 @@ export default function Schedule({ assessment }: Props) {
 
   if (scheduledCandidates === undefined) {
     // Handle loading state
-    return <div>Loading...</div>;
+    return <ScheduleLoader />;
   }
 
   const isNextDisabled =
