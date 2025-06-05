@@ -3,13 +3,17 @@ import { internalMutation, mutation, query } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { type Interview } from "./types/index";
+import { PLAN_LIMITS } from "../src/utils/subscriptions";
 
 type Status =
   | "unauthorized"
   | "notFound"
   | "expired"
   | "alreadyAttempted"
-  | "success";
+  | "success"
+  | "scheduled"
+  | "notInterviewCandidate"
+  | "attemptReached";
 
 const addCandidateToInterview = mutation({
   args: {
@@ -161,83 +165,117 @@ const initiateParticipant = mutation({
     }
 
     // Fetch all participants for user+interview, sorted by latest first
-    const participants = await ctx.db
-      .query("participants")
-      .withIndex("by_interview_and_user", (q) =>
-        q.eq("interviewId", args.interviewId).eq("userId", user._id)
-      )
-      .order("desc")
-      .collect();
+    const [participants, subscription] = await Promise.all([
+      ctx.db
+        .query("participants")
+        .withIndex("by_interview_and_user", (q) =>
+          q.eq("interviewId", args.interviewId).eq("userId", user._id)
+        )
+        .order("desc")
+        .collect(),
+      ctx.runQuery(api.subscriptions.getSubscriptionByUserId, {
+        userId: user._id,
+      }),
+    ]);
 
     const latest = participants[0];
+    const plan = PLAN_LIMITS[subscription?.plan || "free"];
 
-    if (latest) {
-      // Job Interviews
-      if (interview.category === "job") {
-        if (latest.status === "completed") {
+    if (interview.category === "job") {
+      // user is not interview candidate
+      if (!latest) {
+        return {
+          status: "notInterviewCandidate",
+          participantId: null,
+          interview: null,
+        };
+      }
+
+      // check if interview is scheduled
+      if (latest.status === "scheduled") {
+        return {
+          status: "scheduled",
+          participantId: latest._id,
+          interview: interview,
+        };
+      }
+
+      // check if interview is completed
+      if (latest.status === "completed") {
+        return {
+          status: "alreadyAttempted",
+          participantId: null,
+          interview: null,
+        };
+      }
+
+      // check if interview is pending
+      if (latest.status === "pending") {
+        return { status: "success", participantId: latest._id, interview };
+      }
+    }
+
+    if (interview.category === "mock") {
+      // No participant yet — create first
+      if (!latest) {
+        const participantId = await ctx.runMutation(
+          api.participants.createParticipant,
+          {
+            interviewId: args.interviewId,
+            userId: user._id,
+            status: "pending",
+            category: "mock",
+          }
+        );
+
+        return { status: "success", participantId, interview };
+      }
+
+      // check if user is already in pending state
+      if (latest.status === "pending") {
+        return { status: "success", participantId: latest._id, interview };
+      }
+
+      if (latest.status === "completed") {
+        // Check if number of attempts has been reached
+        if (plan.attemptsPerInterview === participants.length) {
           return {
-            status: "alreadyAttempted",
+            status: "attemptReached",
             participantId: null,
             interview: null,
           };
         }
-        if (latest.status === "pending") {
-          return { status: "success", participantId: latest._id, interview };
-        }
-      }
 
-      // Mock Interviews
-      if (interview.category === "mock") {
-        if (latest.status === "pending") {
-          return { status: "success", participantId: latest._id, interview };
-        }
+        // Only create new if no active pending participant
+        const anyPending = participants.find((p) => p.status === "pending");
+        if (!anyPending) {
+          const newParticipantId = await ctx.runMutation(
+            api.participants.createParticipant,
+            {
+              interviewId: args.interviewId,
+              userId: user._id,
+              status: "pending",
+              startedAt: Date.now(),
+              category: "mock",
+            }
+          );
 
-        if (latest.status === "completed") {
-          // Only create new if no active pending participant
-          const anyPending = participants.find((p) => p.status === "pending");
-          if (!anyPending) {
-            const newParticipantId = await ctx.runMutation(
-              api.participants.createParticipant,
-              {
-                interviewId: args.interviewId,
-                userId: user._id,
-                status: "pending",
-                startedAt: Date.now(),
-                category: "mock",
-              }
-            );
-
-            return {
-              status: "success",
-              participantId: newParticipantId,
-              interview,
-            };
-          } else {
-            return {
-              status: "success",
-              participantId: anyPending._id,
-              interview,
-            };
-          }
+          return {
+            status: "success",
+            participantId: newParticipantId,
+            interview,
+          };
+        } else {
+          return {
+            status: "success",
+            participantId: anyPending._id,
+            interview,
+          };
         }
       }
     }
 
-    // No participant yet — create first
-    const participantId = await ctx.runMutation(
-      api.participants.createParticipant,
-      {
-        interviewId: args.interviewId,
-        userId: user._id,
-        status: interview.isScheduled ? "scheduled" : "pending",
-        startedAt: interview.isScheduled ? undefined : Date.now(),
-        category: interview.category,
-        scheduledAt: interview.scheduledAt,
-        isScheduled: interview.isScheduled,
-      }
-    );
-
-    return { status: "success", participantId, interview };
+    return { status: "notFound", participantId: null, interview: null };
   },
 });
 
