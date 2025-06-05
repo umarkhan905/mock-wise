@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { createContext, use, useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { User } from "@/types";
+import { Loader2 } from "lucide-react";
 
 interface AuthContextProps {
   user: User | undefined;
@@ -29,7 +30,12 @@ export const AuthContextProvider = ({
     if (dbUser) setUser(dbUser);
   }, [dbUser]);
 
-  if (!isUserLoaded || !clerkUser || dbUser === undefined) return null;
+  if (!isUserLoaded || dbUser === undefined)
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary size-7" />
+      </div>
+    );
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>
