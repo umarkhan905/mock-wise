@@ -262,6 +262,18 @@ const addNextSubscription = mutation({
   },
 });
 
+const getSubscriptionByUserId = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+      .unique();
+  },
+});
+
 export {
   createFreeSubscription,
   upsertSubscription,
@@ -271,4 +283,5 @@ export {
   downgradeUserSubscription,
   resubscribeToCurrentPlan,
   addNextSubscription,
+  getSubscriptionByUserId,
 };
