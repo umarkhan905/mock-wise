@@ -1,4 +1,4 @@
-import { Bell } from "lucide-react";
+import { Bell, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { NotificationsList } from "./notifications/NotificationList";
 import { NotificationFilter } from "./notifications/NotificationFilter";
@@ -16,8 +16,8 @@ export function Notifications() {
 
   if (notifications === undefined) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Loading notifications...</p>
+      <div className="flex items-center justify-center h-[600px]">
+        <Loader2 className="animate-spin text-white size-9" />
       </div>
     );
   }
