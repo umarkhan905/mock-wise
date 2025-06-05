@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { AppSidebar } from "@/components/dashboard/sidebar/Appsidebar";
 import { Button } from "@/components/ui/button";
-import { Bell, Settings } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuthContext } from "@/context/AuthStore";
@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { SmallNotificationCard } from "@/components/dashboard/notifications/SmallNotificationCard";
+import { UserProfile } from "@/components/dashboard/sidebar/custom-user-pages/UserProfile";
 
 export default function Layout({
   children,
@@ -115,13 +116,7 @@ export default function Layout({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button
-              variant={"ghost"}
-              className="hover:bg-primary/20 hover:text-white"
-              size={"icon"}
-            >
-              <Settings className="size-5" />
-            </Button>
+            <UserProfile />
           </div>
         </header>
         <main className="p-5">{children}</main>
