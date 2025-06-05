@@ -3,6 +3,7 @@ import { useQuery } from "convex/react";
 import { UserCard } from "../../user/UserCard";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { api } from "../../../../../convex/_generated/api";
+import { UserCardSkeleton } from "../../skeletons/UserCardSkeleton";
 
 interface Props {
   userId: Id<"users">;
@@ -17,7 +18,13 @@ export function SearchedUsers({ userId, searchTerm }: Props) {
 
   if (searchUsers === undefined) {
     // Handle loading state
-    return <div>Loading...</div>;
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <UserCardSkeleton key={index} />
+        ))}
+      </div>
+    );
   }
 
   return (
