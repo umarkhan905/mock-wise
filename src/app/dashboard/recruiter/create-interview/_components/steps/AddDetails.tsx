@@ -77,7 +77,10 @@ export function AddDetails({ assessment }: Props) {
         category: "job",
         createdByRole: "recruiter",
       });
-      setLocalStorage("interviewId", interviewId);
+      setLocalStorage(
+        assessment === "voice" ? "voiceInterviewId" : "mcqInterviewId",
+        interviewId
+      );
       nextStep();
     } catch (error) {
       console.log("Error while creating interview", error);
@@ -131,7 +134,9 @@ export function AddDetails({ assessment }: Props) {
   };
 
   useEffect(() => {
-    const interviewId = getLocalStorage("interviewId");
+    const interviewId = getLocalStorage(
+      assessment === "voice" ? "voiceInterviewId" : "mcqInterviewId"
+    );
     if (interviewId) setInterviewId(interviewId as Id<"interviews">);
   }, []);
 
