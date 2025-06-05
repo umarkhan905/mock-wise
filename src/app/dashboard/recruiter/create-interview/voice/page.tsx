@@ -48,8 +48,8 @@ export default function VOICEInterview() {
         {/* Forms */}
         {step === "add-details" && <AddDetails assessment="voice" />}
         {step === "add-question" && <AddQuestions assessment="voice" />}
-        {step === "schedule-interview" && <Schedule />}
-        {step === "preview" && <PreviewLink />}
+        {step === "schedule-interview" && <Schedule assessment="voice" />}
+        {step === "preview" && <PreviewLink assessment="voice" />}
       </div>
     </section>
   );

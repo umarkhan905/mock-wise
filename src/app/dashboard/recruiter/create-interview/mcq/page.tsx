@@ -48,8 +48,8 @@ export default function MCQInterview() {
         {/* Forms */}
         {step === "add-details" && <AddDetails assessment="mcq" />}
         {step === "add-question" && <AddQuestions assessment="mcq" />}
-        {step === "schedule-interview" && <Schedule />}
-        {step === "preview" && <PreviewLink />}
+        {step === "schedule-interview" && <Schedule assessment="mcq" />}
+        {step === "preview" && <PreviewLink assessment="mcq" />}
       </div>
     </section>
   );
