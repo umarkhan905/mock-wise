@@ -8,6 +8,7 @@ import { Badge } from "../ui/badge";
 import { Avatar, AvatarImage } from "../ui/avatar";
 import { AvatarFallback } from "@radix-ui/react-avatar";
 import { ChatBubble } from "./chat/ChatBubble";
+import { SavedMessage } from "@/types";
 
 enum CallStatus {
   INACTIVE = "INACTIVE",
