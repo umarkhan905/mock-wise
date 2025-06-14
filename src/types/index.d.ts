@@ -49,6 +49,7 @@ interface InterviewType {
   assessment: Assessment;
   category: Category;
   questions: Question[];
+  _creationTime: number;
 }
 
 type Interview = InterviewType | undefined | null;
@@ -152,3 +153,36 @@ interface User {
     used: number;
   };
 }
+
+export type Participant = {
+  _id: Id<"participants">;
+  interviewId: Id<"interviews">;
+  userId: Id<"users">;
+  status: "pending" | "in_progress" | "completed" | "scheduled";
+  startedAt?: number;
+  completedAt?: number;
+  category: "mock" | "job";
+  scheduledAt?: number;
+  isScheduled?: boolean;
+  jobId?: Id<"_scheduled_functions">;
+};
+
+export type Feedback = {
+  _id: Id<"feedbacks">;
+  userId: Id<"users">;
+  interviewId: Id<"interviews">;
+  participantId: Id<"participants">;
+  totalRating: number;
+  summary: string;
+  strengths: string;
+  weaknesses: string;
+  improvements: string;
+  assessment: string;
+  recommendedForJob: boolean;
+  recommendationReason?: string;
+  rating: {
+    name: string;
+    score: number;
+    comment: string;
+  }[];
+};

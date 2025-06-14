@@ -436,6 +436,39 @@ const updateCandidateScheduledAt = mutation({
   },
 });
 
+const inviteCandidateToInterview = mutation({
+  args: {
+    interviewId: v.id("interviews"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const existingParticipant = await ctx.db
+      .query("participants")
+      .withIndex("by_interview_and_user", (q) =>
+        q.eq("interviewId", args.interviewId).eq("userId", args.userId)
+      )
+      .filter((q) => q.eq(q.field("category"), "job"))
+      .unique();
+
+    // If participant already exists, return existing participant ID
+    if (existingParticipant) {
+      return existingParticipant._id;
+    }
+
+    // TODO: send notification and email to user about the new interview
+
+    // If not, create a new participant
+    const participantId = await ctx.db.insert("participants", {
+      interviewId: args.interviewId,
+      userId: args.userId,
+      category: "job",
+      status: "pending",
+    });
+
+    return participantId;
+  },
+});
+
 export {
   createParticipant,
   initiateParticipant,
@@ -447,4 +480,5 @@ export {
   removeCandidateFromInterview,
   updateCandidateScheduledAt,
   autoUnscheduleCandidate,
+  inviteCandidateToInterview,
 };
