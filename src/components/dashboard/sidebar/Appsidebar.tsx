@@ -19,6 +19,9 @@ import {
   recruiterSidebarNavigation,
 } from "@/constants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Crown } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 
 type UserData = {
   username: string;
@@ -41,7 +44,7 @@ export function AppSidebar({
       ? candidateSidebarNavigation
       : recruiterSidebarNavigation;
   return (
-    <Sidebar {...props} collapsible="icon">
+    <Sidebar {...props} collapsible="offcanvas">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -74,6 +77,26 @@ export function AppSidebar({
         <NavMain items={navItems} sidebarFor={sidebarFor} />
       </SidebarContent>
       <SidebarFooter>
+        {/* interview credits */}
+        <div className="space-y-2 p-3 border-2 border-primary/50 rounded-md">
+          <div className="flex items-center gap-2">
+            <Crown className="size-6 text-primary" />
+
+            <div className="w-full">
+              <Progress value={80} className="mb-1" />
+
+              <div className="flex justify-between">
+                <span className="text-xs">Interview Credits</span>
+                <span className="text-xs">80/100</span>
+              </div>
+            </div>
+          </div>
+
+          <Button asChild className="w-full text-white" size="sm">
+            <Link href="/dashboard/recruiter/billing">Buy Credits</Link>
+          </Button>
+        </div>
+
         <div className="flex items-center gap-2 px-2 py-2">
           <Avatar className="size-8 rounded-full">
             <AvatarImage src={userData.image} alt={userData.username} />
