@@ -79,7 +79,7 @@ export default function Layout({
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="z-[9999999]">
                 <DropdownMenuLabel>
                   Latest Unread Notifications
                   <Badge
