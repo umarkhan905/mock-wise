@@ -1,5 +1,4 @@
 import {
-  Bot,
   BriefcaseBusiness,
   Calendar,
   CalendarClock,
@@ -92,11 +91,6 @@ export const candidateSidebarNavigation = [
     url: "/dashboard/candidate/billing",
     icon: CreditCard,
   },
-  {
-    title: "Mock Wise AI",
-    url: "/dashboard/candidate/chatbot",
-    icon: Bot,
-  },
 ];
 
 export const recruiterSidebarNavigation = [
@@ -125,11 +119,6 @@ export const recruiterSidebarNavigation = [
     title: "Billing",
     url: "/dashboard/recruiter/billing",
     icon: CreditCard,
-  },
-  {
-    title: "Mock Wise AI",
-    url: "/dashboard/recruiter/chatbot",
-    icon: Bot,
   },
 ];
 
