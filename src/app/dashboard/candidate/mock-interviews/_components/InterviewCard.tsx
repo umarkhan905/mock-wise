@@ -91,7 +91,9 @@ export function InterviewCard({ interview, user }: Props) {
         </p>
 
         <Button className="min-h-10 w-full mt-2 text-white" asChild>
-          <Link href={`/interview/${interview._id}/candidate/details`}>
+          <Link
+            href={`/dashboard/candidate/interviews/${interview._id}/details`}
+          >
             View Interview
           </Link>
         </Button>
