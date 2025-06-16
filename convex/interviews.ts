@@ -156,6 +156,7 @@ const updateQuestions = mutation({
       numberOfQuestions: args.numberOfQuestions,
       duration: args.duration,
       validateTill: args.validateTill,
+      status: "created",
     });
 
     return interviewId;
@@ -398,6 +399,7 @@ const updateFinish = mutation({
     const interviewId = await ctx.db.patch(args.interviewId, {
       description: args.description,
       keywords: args.keywords,
+      status: "created",
     });
 
     return interviewId;
