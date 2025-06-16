@@ -9,6 +9,7 @@ import { api } from "../../../convex/_generated/api";
 import { INTERVIEWER } from "@/constants/vapi";
 import { LoadingScreen } from "./loading/LoadingScreen";
 import AgentScreen from "./AgentScreen";
+import { Question, SavedMessage } from "@/types";
 
 enum CallStatus {
   INACTIVE = "INACTIVE",
@@ -118,7 +119,7 @@ export default function MockWiseAgent({
         status: "completed",
         completedAt: Date.now(),
       });
-      router.push(`/interview/${interviewId}/feedback/${feedbackId}`);
+      router.push(`/dashboard/candidate/interviews/${interviewId}/details`);
     }
   };
 

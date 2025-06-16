@@ -13,6 +13,7 @@ import { v4 as uuid } from "uuid";
 import QuestionCard from "./QuestionCard";
 import { useAuth } from "@clerk/nextjs";
 import { SpeechService } from "@/utils/speech";
+import { Question } from "@/types";
 
 enum InterviewStatus {
   CONNECTING = "CONNECTING",
@@ -172,7 +173,7 @@ export default function MockWiseMcqAgent({
         status: "completed",
         completedAt: Date.now(),
       });
-      router.push(`/interview/${interviewId}/feedback/${feedbackId}`);
+      router.push(`/dashboard/candidate/interviews/${interviewId}/details`);
     }
   };
 
