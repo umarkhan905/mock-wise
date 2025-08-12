@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Crown } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { useAuthContext } from "@/context/AuthStore";
 
 type UserData = {
   username: string;
@@ -43,6 +44,9 @@ export function AppSidebar({
     sidebarFor === "candidate"
       ? candidateSidebarNavigation
       : recruiterSidebarNavigation;
+
+  const { user } = useAuthContext();
+
   return (
     <Sidebar {...props} collapsible="offcanvas">
       <SidebarHeader>
@@ -83,11 +87,19 @@ export function AppSidebar({
             <Crown className="size-6 text-primary" />
 
             <div className="w-full">
-              <Progress value={80} className="mb-1" />
+              <Progress
+                value={
+                  (Number(user?.credits?.used) / Number(user?.credits?.total)) *
+                  100
+                }
+                className="mb-1"
+              />
 
               <div className="flex justify-between">
                 <span className="text-xs">Interview Credits</span>
-                <span className="text-xs">80/100</span>
+                <span className="text-xs">
+                  {user?.credits?.used}/{user?.credits?.total}
+                </span>
               </div>
             </div>
           </div>
