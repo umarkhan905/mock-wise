@@ -80,7 +80,7 @@ export default function EventPopOver({
         </div>
 
         <Button className="w-full min-h-10 text-white" asChild>
-          <Link href={`/interview/${event?.id}/${userRole}/details`}>
+          <Link href={`/dashboard/${userRole}/interviews/${event?.id}/details`}>
             View Details
           </Link>
         </Button>

@@ -234,8 +234,8 @@ export default defineSchema({
     keyword: v.union(
       v.literal("starter"),
       v.literal("professional"),
-      v.literal("enterprise"),
-      v.literal("unlimited")
+      v.literal("team"),
+      v.literal("enterprise")
     ),
   }).index("by_keyword", ["keyword"]),
 });
