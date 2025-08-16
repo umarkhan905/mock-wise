@@ -70,6 +70,13 @@ export function Attempts({ participants, interviewId }: Props) {
                             </span>
                           ) : participant?.status === "pending" ? (
                             <span>Not started yet</span>
+                          ) : participant?.status === "scheduled" ? (
+                            <span>
+                              Scheduled on{" "}
+                              {new Date(
+                                participant.scheduledAt!
+                              ).toDateString()}
+                            </span>
                           ) : (
                             <span>
                               Started on{" "}
@@ -100,6 +107,13 @@ export function Attempts({ participants, interviewId }: Props) {
                         className="text-yellow-500 bg-yellow-500/20 rounded-full p-1 px-4"
                       >
                         Pending
+                      </Badge>
+                    ) : participant.status === "scheduled" ? (
+                      <Badge
+                        variant={"outline"}
+                        className="text-blue-500 bg-blue-500/20 rounded-full p-1 px-4"
+                      >
+                        Scheduled
                       </Badge>
                     ) : (
                       <Badge
